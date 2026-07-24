@@ -1,0 +1,51 @@
+:root {
+	color-scheme: dark;
+	--bg: #0e0a1f;
+	font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	min-height: 100vh;
+	background:
+		radial-gradient(1200px 800px at 50% -10%, #241a45 0%, transparent 60%),
+		var(--bg);
+	color: #ece9f7;
+}
+
+button {
+	font-family: inherit;
+}
+
+img {
+	display: block;
+}
+
+/* print: hide the app, show the physical sheets */
+.print-only {
+	display: none;
+}
+
+@media print {
+	.app,
+	.backdrop {
+		display: none !important;
+	}
+	.print-only {
+		display: block !important;
+	}
+}
+
+@page {
+	size: A4;
+	margin: 10mm;
+}
