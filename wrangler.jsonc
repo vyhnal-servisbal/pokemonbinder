@@ -1,0 +1,14 @@
+{
+	"name": "pokemon-binder",
+	"main": ".svelte-kit/cloudflare/_worker.js",
+	"compatibility_date": "2025-01-01",
+	"compatibility_flags": ["nodejs_als"],
+	"assets": {
+		"binding": "ASSETS",
+		"directory": ".svelte-kit/cloudflare"
+	},
+	"vars": {
+		"PUBLIC_SUPABASE_URL": "https://kjzcdlsopiqkrzgfvdlv.supabase.co",
+		"PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_mL9wqIvCJ1fpxibt-ZmncQ_GNp9_nYx"
+	}
+}
