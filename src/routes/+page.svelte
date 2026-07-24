@@ -2,11 +2,14 @@
 	import { onMount } from 'svelte';
 	import Binder from '$lib/components/Binder.svelte';
 	import AddPanel from '$lib/components/AddPanel.svelte';
+	import SessionsPanel from '$lib/components/SessionsPanel.svelte';
 	import CardPreview from '$lib/components/CardPreview.svelte';
 	import PrintSheet from '$lib/components/PrintSheet.svelte';
-	import Login from '$lib/components/Login.svelte';
+	import EditBinder from '$lib/components/EditBinder.svelte';
 	import { store } from '$lib/binderStore.svelte';
 	import { cloud } from '$lib/cloud.svelte';
+
+	let editing = $state(false);
 
 	onMount(() => {
 		cloud.init();
@@ -24,7 +27,7 @@
 			: cloud.status === 'saved'
 				? 'Uložené'
 				: cloud.status === 'error'
-					? 'Chyba uloženia'
+					? 'Chyba'
 					: ''
 	);
 </script>
@@ -35,12 +38,11 @@
 
 {#if cloud.enabled && !cloud.ready}
 	<div class="center">Načítavam...</div>
-{:else if cloud.enabled && !cloud.session}
-	<Login />
 {:else}
 	<div class="app">
 		<section class="stage">
 			<div class="topbar">
+				<button class="edit" onclick={() => (editing = true)}>Upraviť binder</button>
 				<div class="views">
 					<button class:active={store.view === 'single'} onclick={() => (store.view = 'single')}
 						>Single 3×3</button
@@ -55,19 +57,20 @@
 		</section>
 
 		<aside class="sidebar">
-			{#if cloud.enabled && cloud.session}
-				<div class="account">
-					<span class="email">{cloud.session.user.email}</span>
-					<span class="save" class:on={saveLabel !== ''}>{saveLabel}</span>
-					<button class="logout" onclick={() => cloud.signOut()}>Odhlásiť</button>
-				</div>
+			{#if cloud.enabled}
+				<div class="status"><span class="save" class:on={saveLabel !== ''}>{saveLabel}</span></div>
 			{/if}
 			<AddPanel />
+			<SessionsPanel />
 		</aside>
 	</div>
 
 	{#if store.preview}
 		<CardPreview card={store.preview} onClose={() => store.closePreview()} />
+	{/if}
+
+	{#if editing}
+		<EditBinder onClose={() => (editing = false)} />
 	{/if}
 
 	<PrintSheet />
@@ -95,8 +98,24 @@
 	}
 	.topbar {
 		display: flex;
-		justify-content: flex-end;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
 		margin-bottom: 1.25rem;
+		flex-wrap: wrap;
+	}
+	.edit {
+		padding: 0.5rem 0.9rem;
+		border-radius: 999px;
+		border: 1px solid rgba(255, 255, 255, 0.15);
+		background: transparent;
+		color: #d8d2f0;
+		cursor: pointer;
+		font-size: 0.85rem;
+	}
+	.edit:hover {
+		background: rgba(139, 92, 246, 0.2);
+		border-color: #8b5cf6;
 	}
 	.views {
 		display: flex;
@@ -123,34 +142,19 @@
 		flex-direction: column;
 		gap: 0.8rem;
 	}
-	.account {
+	.status {
 		display: flex;
-		align-items: center;
-		gap: 0.6rem;
-		font-size: 0.78rem;
-		color: rgba(255, 255, 255, 0.65);
-	}
-	.email {
-		flex: 1;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
+		justify-content: flex-end;
+		min-height: 1rem;
 	}
 	.save {
 		opacity: 0;
 		transition: opacity 0.2s;
 		color: #8de0b0;
+		font-size: 0.78rem;
 	}
 	.save.on {
 		opacity: 1;
-	}
-	.logout {
-		border: 0;
-		background: none;
-		color: #b7aee0;
-		cursor: pointer;
-		font-size: 0.78rem;
-		text-decoration: underline;
 	}
 	@media (max-width: 900px) {
 		.app {

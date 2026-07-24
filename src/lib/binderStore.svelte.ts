@@ -3,6 +3,9 @@ import { demoBinder } from './mockData';
 
 let seq = 0;
 const newId = () => `it_${Date.now().toString(36)}_${seq++}`;
+const newSideId = () => `sd_${Date.now().toString(36)}_${seq++}`;
+
+export const MIN_PAGES = 36;
 
 function occupiedCells(side: BinderSide): Set<string> {
 	const s = new Set<string>();
@@ -24,6 +27,32 @@ class BinderStore {
 	// drag state is plain (not reactive) - only read on drop
 	dragItemId: string | null = null;
 	dragFromSideId: string | null = null;
+
+	constructor() {
+		this.ensureMinPages();
+	}
+
+	get pageCount() {
+		return this.binder.sides.length;
+	}
+
+	// keep the binder at >= MIN_PAGES sides (empty pages padded in)
+	ensureMinPages() {
+		while (this.binder.sides.length < MIN_PAGES) {
+			this.binder.sides.push({ id: newSideId(), items: [] });
+		}
+	}
+
+	// change how many pages the binder has (floor MIN_PAGES); only trims trailing empty pages
+	setPageCount(n: number) {
+		const target = Math.max(MIN_PAGES, Math.floor(n) || MIN_PAGES);
+		const sides = this.binder.sides;
+		while (sides.length < target) sides.push({ id: newSideId(), items: [] });
+		while (sides.length > target && sides[sides.length - 1].items.length === 0) sides.pop();
+		if (this.index + this.step > this.binder.sides.length) {
+			this.index = Math.max(0, this.binder.sides.length - this.step);
+		}
+	}
 
 	get step() {
 		return this.view === 'spread' ? 2 : 1;

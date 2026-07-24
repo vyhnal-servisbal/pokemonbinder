@@ -13,19 +13,26 @@ function fileToDataUrl(file: File): Promise<string> {
 	});
 }
 
-// Ties Supabase (auth + persistence + storage + realtime) to the local binder store.
+interface SessionRow {
+	id: string;
+	name: string;
+	created_at: string;
+}
+
+// Ties Supabase (anonymous auth + persistence + storage + realtime + snapshots) to the local store.
 class Cloud {
 	enabled = hasSupabase;
 	session = $state<Session | null>(null);
-	ready = $state(false); // auth has been checked
+	ready = $state(false);
 	status = $state<'idle' | 'saving' | 'saved' | 'error'>('idle');
+	sessions = $state<SessionRow[]>([]);
 
 	private binderId: string | null = null;
 	private started = false;
 	private subscribed = false;
-	private applying = false; // we're writing remote data into the store, don't echo-save
-	private lastJson = ''; // last content we saved/loaded, to skip no-op saves
-	private lastSavedAt = 0; // updated_at (ms) of our last write, to ignore realtime echo
+	private applying = false;
+	private lastJson = '';
+	private lastSavedAt = 0;
 	private saveTimer: ReturnType<typeof setTimeout> | undefined;
 
 	async init() {
@@ -34,30 +41,24 @@ class Cloud {
 			return;
 		}
 		this.started = true;
+
 		const { data } = await supabase.auth.getSession();
 		this.session = data.session;
+		if (!this.session) {
+			// no email login: sign in anonymously (enable it in Supabase Auth > Providers)
+			const anon = await supabase.auth.signInAnonymously();
+			this.session = anon.data.session ?? null;
+			if (anon.error) this.status = 'error';
+		}
 		supabase.auth.onAuthStateChange((_event, s) => {
-			this.session = s;
-			if (s) this.load();
+			if (s) this.session = s;
 		});
+
 		if (this.session) await this.load();
 		this.ready = true;
 	}
 
-	async signIn(email: string) {
-		return supabase.auth.signInWithOtp({
-			email,
-			options: { emailRedirectTo: window.location.origin }
-		});
-	}
-
-	async signOut() {
-		await supabase.auth.signOut();
-		this.session = null;
-	}
-
 	private async load() {
-		// single shared space: newest binder row
 		const { data, error } = await supabase
 			.from('binders')
 			.select('id, data, updated_at')
@@ -75,7 +76,6 @@ class Cloud {
 			this.lastSavedAt = new Date(data.updated_at).getTime();
 			if (data.data && (data.data as Binder).sides) this.applyRemote(data.data as Binder);
 		} else {
-			// no row yet: create one from whatever is on screen now
 			const ins = await supabase
 				.from('binders')
 				.insert({ name: store.binder.name, data: store.binder })
@@ -88,13 +88,15 @@ class Cloud {
 			}
 		}
 		this.subscribe();
+		this.loadSessions();
 	}
 
 	private applyRemote(b: Binder) {
 		this.applying = true;
 		store.binder = b;
-		if (store.index >= b.sides.length) store.index = 0;
-		this.lastJson = JSON.stringify(b);
+		store.ensureMinPages();
+		if (store.index >= store.binder.sides.length) store.index = 0;
+		this.lastJson = JSON.stringify(store.binder);
 		this.applying = false;
 	}
 
@@ -110,14 +112,14 @@ class Cloud {
 					(payload) => {
 						const row = payload.new as { data: Binder; updated_at: string };
 						const at = new Date(row.updated_at).getTime();
-						if (at <= this.lastSavedAt) return; // our own write echoing back
+						if (at <= this.lastSavedAt) return;
 						this.lastSavedAt = at;
 						if (row.data && row.data.sides) this.applyRemote(row.data);
 					}
 				)
 				.subscribe();
 		} catch {
-			// realtime is optional; save/load still work without it
+			// realtime optional
 		}
 	}
 
@@ -150,7 +152,47 @@ class Cloud {
 		this.status = 'saved';
 	}
 
-	// upload to Storage and return a public URL; falls back to a data URL when offline/local
+	// ----- session snapshots (manual save points) -----
+
+	async loadSessions() {
+		if (!this.enabled) return;
+		const { data } = await supabase
+			.from('binder_sessions')
+			.select('id, name, created_at')
+			.order('created_at', { ascending: false });
+		this.sessions = data ?? [];
+	}
+
+	async saveSession(name: string) {
+		if (!this.enabled) return;
+		await supabase
+			.from('binder_sessions')
+			.insert({ name: name.trim() || 'Sesia', data: store.binder });
+		await this.loadSessions();
+	}
+
+	async restoreSession(id: string) {
+		if (!this.enabled) return;
+		const { data } = await supabase.from('binder_sessions').select('data').eq('id', id).single();
+		if (data && data.data && (data.data as Binder).sides) {
+			this.applying = true;
+			store.binder = data.data as Binder;
+			store.ensureMinPages();
+			if (store.index >= store.binder.sides.length) store.index = 0;
+			this.applying = false;
+			// deliberately keep lastJson stale so autosave pushes the restored state to the live binder
+			this.scheduleSave();
+		}
+	}
+
+	async deleteSession(id: string) {
+		if (!this.enabled) return;
+		await supabase.from('binder_sessions').delete().eq('id', id);
+		await this.loadSessions();
+	}
+
+	// ----- image upload -----
+
 	async uploadImage(file: File): Promise<string> {
 		if (!this.enabled || !this.session) return fileToDataUrl(file);
 		const ext = (file.name.split('.').pop() || 'png').toLowerCase();
