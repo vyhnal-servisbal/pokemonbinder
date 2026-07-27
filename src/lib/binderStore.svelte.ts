@@ -213,8 +213,31 @@ class BinderStore {
 		const src = fromSide.items.find((it) => it.id === fromId);
 		if (!src) return;
 
-		// spanned source: move-only into a free region, snapped inside the page
+		// spanned source
 		if (src.rowSpan > 1 || src.colSpan > 1) {
+			const hit = this.itemAt(toSide, row, col);
+			// swap with another item of the same footprint (e.g. two images spanning 2 pockets)
+			if (
+				hit &&
+				hit.id !== src.id &&
+				hit.rowSpan === src.rowSpan &&
+				hit.colSpan === src.colSpan
+			) {
+				const sr = src.row;
+				const sc = src.col;
+				src.row = hit.row;
+				src.col = hit.col;
+				hit.row = sr;
+				hit.col = sc;
+				if (fromSide !== toSide) {
+					fromSide.items = fromSide.items.filter((it) => it.id !== src.id);
+					toSide.items = toSide.items.filter((it) => it.id !== hit.id);
+					fromSide.items.push(hit);
+					toSide.items.push(src);
+				}
+				return;
+			}
+			// otherwise move into a free region, snapped inside the page
 			const r = Math.max(0, Math.min(row, 3 - src.rowSpan));
 			const c = Math.max(0, Math.min(col, 3 - src.colSpan));
 			if (!this.regionFree(toSide, src.id, r, c, src.rowSpan, src.colSpan)) return;

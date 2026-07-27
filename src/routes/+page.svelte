@@ -7,11 +7,13 @@
 	import PrintSheet from '$lib/components/PrintSheet.svelte';
 	import EditBinder from '$lib/components/EditBinder.svelte';
 	import BinderBar from '$lib/components/BinderBar.svelte';
+	import PromptModal from '$lib/components/PromptModal.svelte';
 	import ProfilePrompt from '$lib/components/ProfilePrompt.svelte';
 	import { store } from '$lib/binderStore.svelte';
 	import { cloud } from '$lib/cloud.svelte';
 
 	let editing = $state(false);
+	let prompt = $state<{ mode: 'new' | 'name' } | null>(null);
 
 	onMount(() => {
 		cloud.init();
@@ -43,7 +45,10 @@
 {:else}
 	<header class="topbar">
 		<div class="topbar-inner">
-			<BinderBar />
+			<BinderBar
+				onNew={() => (prompt = { mode: 'new' })}
+				onRename={() => (prompt = { mode: 'name' })}
+			/>
 			<div class="menu">
 				{#if cloud.enabled}
 					<span class="save" class:on={saveLabel !== ''}>{saveLabel}</span>
@@ -80,6 +85,21 @@
 		<EditBinder onClose={() => (editing = false)} />
 	{/if}
 
+	{#if prompt}
+		<PromptModal
+			title={prompt.mode === 'new' ? 'Nový binder' : 'Tvoje meno'}
+			placeholder={prompt.mode === 'new' ? 'Názov binderu' : 'Meno'}
+			value={prompt.mode === 'name' ? cloud.profileName : ''}
+			confirmText={prompt.mode === 'new' ? 'Vytvoriť' : 'Uložiť'}
+			onConfirm={(v) => {
+				if (prompt?.mode === 'new') cloud.createBinder(v || 'Nový binder');
+				else if (v) cloud.setProfile(v);
+				prompt = null;
+			}}
+			onClose={() => (prompt = null)}
+		/>
+	{/if}
+
 	{#if cloud.needsProfile}
 		<ProfilePrompt />
 	{/if}
@@ -100,9 +120,9 @@
 		position: sticky;
 		top: 0;
 		z-index: 40;
-		background: rgba(11, 12, 17, 0.72);
+		background: rgba(14, 15, 20, 0.8);
 		backdrop-filter: blur(14px);
-		border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+		border-bottom: 1px solid rgba(255, 255, 255, 0.09);
 	}
 	.topbar-inner {
 		display: flex;
@@ -186,7 +206,7 @@
 		width: 78%;
 		height: 82%;
 		transform: translateX(-50%);
-		background: radial-gradient(closest-side, rgba(var(--accent-rgb), 0.12), transparent 72%);
+		background: radial-gradient(closest-side, rgba(var(--accent-rgb), 0.16), transparent 70%);
 		filter: blur(50px);
 		z-index: 0;
 		pointer-events: none;

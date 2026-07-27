@@ -114,9 +114,9 @@
 	.page {
 		position: relative;
 		aspect-ratio: 3 / 4;
-		background: linear-gradient(160deg, #15161d, #0c0d11);
+		background: linear-gradient(160deg, #101116, #090a0d);
 		border-radius: 12px;
-		box-shadow: inset 0 0 55px rgba(0, 0, 0, 0.65);
+		box-shadow: inset 0 0 45px rgba(0, 0, 0, 0.75);
 	}
 	.cell {
 		position: absolute;
@@ -129,9 +129,9 @@
 		content: '';
 		position: absolute;
 		inset: 0.5rem;
-		border: 1px solid rgba(255, 255, 255, 0.06);
+		border: 1px solid rgba(255, 255, 255, 0.05);
 		border-radius: 8px;
-		background: rgba(255, 255, 255, 0.02);
+		background: rgba(0, 0, 0, 0.28);
 		transition:
 			border-color 0.15s,
 			background 0.15s;
