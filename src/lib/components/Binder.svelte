@@ -5,54 +5,29 @@
 	const isSpread = $derived(store.view === 'spread');
 	const left = $derived(store.binder.sides[store.index]);
 	const right = $derived(isSpread ? store.binder.sides[store.index + 1] : undefined);
-
-	const counter = $derived.by(() => {
-		const n = store.binder.sides.length;
-		if (isSpread) {
-			const a = store.index + 1;
-			const b = Math.min(store.index + 2, n);
-			return a === b ? `Strana ${a} / ${n}` : `Strany ${a}–${b} / ${n}`;
-		}
-		return `Strana ${store.index + 1} / ${n}`;
-	});
 </script>
 
-<div class="binder-wrap">
-	<div class="binder">
-		<button
-			class="nav"
-			onclick={() => store.prev()}
-			disabled={!store.canPrev}
-			aria-label="Predchádzajúca strana">‹</button
-		>
+<div class="binder">
+	<button
+		class="nav"
+		onclick={() => store.prev()}
+		disabled={!store.canPrev}
+		aria-label="Predchádzajúca strana">‹</button
+	>
 
-		{#key store.index}
-			<div class="spread" class:single={!isSpread} class:paired={!!right}>
-				{#if left}<div class="half"><BinderPage side={left} /></div>{/if}
-				{#if right}<div class="half"><BinderPage side={right} /></div>{/if}
-			</div>
-		{/key}
+	{#key store.index}
+		<div class="spread" class:single={!isSpread} class:paired={!!right}>
+			{#if left}<div class="half"><BinderPage side={left} /></div>{/if}
+			{#if right}<div class="half"><BinderPage side={right} /></div>{/if}
+		</div>
+	{/key}
 
-		<button class="nav" onclick={() => store.nextOrAdd()} aria-label="Ďalšia strana (na konci pridá stranu)"
-			>›</button
-		>
-	</div>
-
-	<div class="pager">
-		<span class="count">{counter}</span>
-		<button class="trim" onclick={() => store.trimEmptyPages()} disabled={!store.lastEmpty}>
-			🧹 Odobrať prázdne strany
-		</button>
-	</div>
+	<button class="nav" onclick={() => store.nextOrAdd()} aria-label="Ďalšia strana (na konci pridá stranu)"
+		>›</button
+	>
 </div>
 
 <style>
-	.binder-wrap {
-		display: flex;
-		flex-direction: column;
-		gap: 1rem;
-		width: 100%;
-	}
 	.binder {
 		display: flex;
 		align-items: center;
@@ -68,8 +43,8 @@
 		gap: 1.75rem;
 		flex: 1;
 		min-width: 0;
-		/* cap by width AND viewport height so the whole binder + pager fit without scrolling */
-		max-width: min(900px, max(300px, calc((100dvh - 250px) * 1.5 + 76px)));
+		/* height-driven: fill the viewport height, capped by available width -> as big as fits with no scroll */
+		max-width: min(100%, max(300px, calc((100dvh - 150px) * 1.5 + 76px)));
 		padding: 1.5rem;
 		border-radius: 24px;
 		background:
@@ -82,13 +57,12 @@
 		/* subtle flash + fade whenever the page changes */
 		animation: page-flash 0.22s ease-out;
 	}
-	/* each page is (spread - gap) / 2 so a lone/single page matches a page of a spread */
 	.half {
 		width: calc((100% - 1.75rem) / 2);
 		min-width: 0;
 	}
 	.spread.single {
-		max-width: min(460px, max(220px, calc((100dvh - 250px) * 0.75 + 48px)));
+		max-width: min(100%, max(220px, calc((100dvh - 150px) * 0.75 + 48px)));
 		margin: 0 auto;
 	}
 	.spread.single .half {
@@ -148,41 +122,5 @@
 	.nav:disabled {
 		opacity: 0.25;
 		cursor: default;
-	}
-
-	.pager {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		gap: 1rem;
-		flex-wrap: wrap;
-	}
-	.count {
-		font-size: 0.85rem;
-		color: rgba(255, 255, 255, 0.65);
-		font-variant-numeric: tabular-nums;
-	}
-	.trim {
-		padding: 0.45rem 0.9rem;
-		border-radius: 12px;
-		border: 1px solid rgba(var(--accent-rgb), 0.35);
-		background: rgba(var(--accent-rgb), 0.12);
-		color: #d1f6ef;
-		cursor: pointer;
-		font-size: 0.78rem;
-		transition:
-			background 0.2s,
-			border-color 0.2s;
-	}
-	.trim:hover:not(:disabled) {
-		background: rgba(var(--accent-rgb), 0.22);
-		border-color: var(--accent);
-	}
-	.trim:disabled {
-		opacity: 0.35;
-		cursor: default;
-		border-color: rgba(255, 255, 255, 0.12);
-		background: rgba(255, 255, 255, 0.04);
-		color: #d8d2f0;
 	}
 </style>

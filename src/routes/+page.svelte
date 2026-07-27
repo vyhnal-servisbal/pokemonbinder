@@ -35,6 +35,16 @@
 					? 'Chyba'
 					: ''
 	);
+
+	const pageInfo = $derived.by(() => {
+		const n = store.binder.sides.length;
+		if (store.view === 'spread') {
+			const a = store.index + 1;
+			const b = Math.min(store.index + 2, n);
+			return a === b ? `Strana ${a} / ${n}` : `Strany ${a}–${b} / ${n}`;
+		}
+		return `Strana ${store.index + 1} / ${n}`;
+	});
 </script>
 
 <svelte:head>
@@ -61,10 +71,19 @@
 
 	<header class="topbar">
 		<div class="topbar-inner">
-			<BinderBar
-				onNew={() => (prompt = { mode: 'new' })}
-				onRename={() => (prompt = { mode: 'name' })}
-			/>
+			<div class="left">
+				<BinderBar
+					onNew={() => (prompt = { mode: 'new' })}
+					onRename={() => (prompt = { mode: 'name' })}
+				/>
+				<span class="count">{pageInfo}</span>
+				<button
+					class="trim"
+					onclick={() => store.trimEmptyPages()}
+					disabled={!store.lastEmpty}
+					title="Odobrať prázdne strany">🧹</button
+				>
+			</div>
 			<div class="menu">
 				{#if cloud.enabled}
 					<span class="save" class:on={saveLabel !== ''}>{saveLabel}</span>
@@ -183,6 +202,36 @@
 		margin: 0 auto;
 		padding: 0.45rem 2.25rem;
 	}
+	.left {
+		display: flex;
+		align-items: center;
+		gap: 0.7rem;
+		flex-wrap: wrap;
+	}
+	.count {
+		font-size: 0.8rem;
+		color: rgba(255, 255, 255, 0.6);
+		font-variant-numeric: tabular-nums;
+	}
+	.trim {
+		width: 34px;
+		height: 34px;
+		border-radius: 10px;
+		border: 1px solid rgba(var(--accent-rgb), 0.35);
+		background: rgba(var(--accent-rgb), 0.12);
+		color: #d1f6ef;
+		cursor: pointer;
+		font-size: 0.95rem;
+	}
+	.trim:hover:not(:disabled) {
+		background: rgba(var(--accent-rgb), 0.22);
+	}
+	.trim:disabled {
+		opacity: 0.3;
+		cursor: default;
+		border-color: rgba(255, 255, 255, 0.12);
+		background: rgba(255, 255, 255, 0.04);
+	}
 	.menu {
 		display: flex;
 		align-items: center;
@@ -254,7 +303,7 @@
 		align-items: start;
 		max-width: 1640px;
 		margin: 0 auto;
-		padding: 2rem 2.25rem 3rem;
+		padding: 1rem 2.25rem 1rem;
 	}
 	.stage {
 		min-width: 0;
@@ -280,7 +329,7 @@
 	}
 	.sidebar {
 		position: sticky;
-		top: 5rem;
+		top: 3.75rem;
 		display: flex;
 		flex-direction: column;
 		gap: 0.8rem;
