@@ -41,30 +41,32 @@
 {#if cloud.enabled && !cloud.ready}
 	<div class="center">Načítavam...</div>
 {:else}
-	<div class="app">
-		<section class="stage">
-			<div class="topbar">
-				<BinderBar />
-				<div class="right">
-					<button class="edit" onclick={() => (editing = true)}>Upraviť binder</button>
-					<div class="views">
-						<button class:active={store.view === 'single'} onclick={() => (store.view = 'single')}
-							>Single 3×3</button
-						>
-						<button class:active={store.view === 'spread'} onclick={() => (store.view = 'spread')}
-							>Double 3×3</button
-						>
-					</div>
+	<header class="topbar">
+		<div class="topbar-inner">
+			<BinderBar />
+			<div class="menu">
+				{#if cloud.enabled}
+					<span class="save" class:on={saveLabel !== ''}>{saveLabel}</span>
+				{/if}
+				<button class="edit" onclick={() => (editing = true)}>Upraviť binder</button>
+				<div class="views">
+					<button class:active={store.view === 'single'} onclick={() => (store.view = 'single')}
+						>Single 3×3</button
+					>
+					<button class:active={store.view === 'spread'} onclick={() => (store.view = 'spread')}
+						>Double 3×3</button
+					>
 				</div>
 			</div>
+		</div>
+	</header>
 
+	<div class="app">
+		<section class="stage">
 			<Binder />
 		</section>
 
 		<aside class="sidebar">
-			{#if cloud.enabled}
-				<div class="status"><span class="save" class:on={saveLabel !== ''}>{saveLabel}</span></div>
-			{/if}
 			<AddPanel />
 			<SessionsPanel />
 		</aside>
@@ -93,6 +95,75 @@
 		justify-content: center;
 		opacity: 0.6;
 	}
+
+	.topbar {
+		position: sticky;
+		top: 0;
+		z-index: 40;
+		background: rgba(18, 19, 26, 0.82);
+		backdrop-filter: blur(12px);
+		border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+	}
+	.topbar-inner {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		flex-wrap: wrap;
+		max-width: 1640px;
+		margin: 0 auto;
+		padding: 0.7rem 2.25rem;
+	}
+	.menu {
+		display: flex;
+		align-items: center;
+		gap: 0.7rem;
+		flex-wrap: wrap;
+	}
+	.save {
+		font-size: 0.78rem;
+		color: #8de0b0;
+		opacity: 0;
+		transition: opacity 0.2s;
+	}
+	.save.on {
+		opacity: 1;
+	}
+	.edit {
+		padding: 0.5rem 0.9rem;
+		border-radius: 10px;
+		border: 1px solid rgba(255, 255, 255, 0.12);
+		background: rgba(255, 255, 255, 0.04);
+		color: #d8d2f0;
+		cursor: pointer;
+		font-size: 0.85rem;
+	}
+	.edit:hover {
+		background: rgba(139, 92, 246, 0.22);
+		border-color: #8b5cf6;
+	}
+	.views {
+		display: flex;
+		gap: 4px;
+		padding: 3px;
+		border-radius: 10px;
+		background: rgba(255, 255, 255, 0.05);
+		border: 1px solid rgba(255, 255, 255, 0.08);
+	}
+	.views button {
+		padding: 0.4rem 0.8rem;
+		border-radius: 7px;
+		border: 0;
+		background: transparent;
+		color: #b9b3d4;
+		cursor: pointer;
+		font-size: 0.82rem;
+	}
+	.views button.active {
+		background: #8b5cf6;
+		color: #fff;
+	}
+
 	.app {
 		display: grid;
 		grid-template-columns: minmax(0, 1fr) 340px;
@@ -100,80 +171,25 @@
 		align-items: start;
 		max-width: 1640px;
 		margin: 0 auto;
-		padding: 1.75rem 2.25rem 3rem;
+		padding: 2rem 2.25rem 3rem;
 	}
 	.stage {
 		min-width: 0;
 	}
-	.topbar {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 1rem;
-		margin-bottom: 1.25rem;
-		flex-wrap: wrap;
-	}
-	.right {
-		display: flex;
-		align-items: center;
-		gap: 1rem;
-		flex-wrap: wrap;
-	}
-	.edit {
-		padding: 0.5rem 0.9rem;
-		border-radius: 999px;
-		border: 1px solid rgba(255, 255, 255, 0.15);
-		background: transparent;
-		color: #d8d2f0;
-		cursor: pointer;
-		font-size: 0.85rem;
-	}
-	.edit:hover {
-		background: rgba(139, 92, 246, 0.2);
-		border-color: #8b5cf6;
-	}
-	.views {
-		display: flex;
-		gap: 0.4rem;
-	}
-	.views button {
-		padding: 0.5rem 0.9rem;
-		border-radius: 999px;
-		border: 1px solid rgba(255, 255, 255, 0.15);
-		background: transparent;
-		color: #d8d2f0;
-		cursor: pointer;
-		font-size: 0.85rem;
-	}
-	.views button.active {
-		background: #fff;
-		color: #1a1233;
-		border-color: #fff;
-	}
 	.sidebar {
 		position: sticky;
-		top: 1.75rem;
+		top: 5rem;
 		display: flex;
 		flex-direction: column;
 		gap: 0.8rem;
 	}
-	.status {
-		display: flex;
-		justify-content: flex-end;
-		min-height: 1rem;
-	}
-	.save {
-		opacity: 0;
-		transition: opacity 0.2s;
-		color: #8de0b0;
-		font-size: 0.78rem;
-	}
-	.save.on {
-		opacity: 1;
-	}
 	@media (max-width: 900px) {
+		.topbar-inner {
+			padding: 0.7rem 1.25rem;
+		}
 		.app {
 			grid-template-columns: 1fr;
+			padding: 1.5rem 1.25rem 3rem;
 		}
 		.sidebar {
 			position: static;
