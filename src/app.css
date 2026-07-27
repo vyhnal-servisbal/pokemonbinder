@@ -1,10 +1,10 @@
 :root {
 	color-scheme: dark;
 	--bg: #0b0c11;
-	--accent: #f0b429;
-	--accent-rgb: 240, 180, 41;
-	--accent-strong: #d99a1e;
-	--on-accent: #241a00;
+	--accent: #79e2d5;
+	--accent-rgb: 121, 226, 213;
+	--accent-strong: #57c9ba;
+	--on-accent: #062521;
 	font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 

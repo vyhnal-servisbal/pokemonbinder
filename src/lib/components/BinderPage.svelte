@@ -129,9 +129,9 @@
 		content: '';
 		position: absolute;
 		inset: 0.5rem;
-		border: 1px solid rgba(255, 255, 255, 0.05);
+		border: 1px dashed rgba(255, 255, 255, 0.16);
 		border-radius: 8px;
-		background: rgba(0, 0, 0, 0.28);
+		background: rgba(0, 0, 0, 0.22);
 		transition:
 			border-color 0.15s,
 			background 0.15s;

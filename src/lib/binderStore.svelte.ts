@@ -5,7 +5,7 @@ let seq = 0;
 const newId = () => `it_${Date.now().toString(36)}_${seq++}`;
 const newSideId = () => `sd_${Date.now().toString(36)}_${seq++}`;
 
-export const MIN_PAGES = 36;
+export const MIN_PAGES = 1;
 
 // a fresh, empty binder with MIN_PAGES blank pages
 export function makeEmptyBinder(name: string): Binder {
@@ -75,6 +75,41 @@ class BinderStore {
 	}
 	next() {
 		if (this.canNext) this.index = this.index + this.step;
+	}
+
+	// right arrow: navigate, or append a new page when already at the end
+	nextOrAdd() {
+		if (this.canNext) {
+			this.index = this.index + this.step;
+		} else {
+			this.addPage();
+			this.goToEnd();
+		}
+	}
+
+	addPage() {
+		this.binder.sides.push({ id: newSideId(), items: [] });
+	}
+
+	// is the last page empty (and not the only page)? -> there is something to trim
+	get lastEmpty() {
+		const s = this.binder.sides;
+		return s.length > 1 && s[s.length - 1].items.length === 0;
+	}
+
+	// remove trailing empty pages (never touches pages with cards)
+	trimEmptyPages() {
+		const s = this.binder.sides;
+		while (s.length > 1 && s[s.length - 1].items.length === 0) s.pop();
+		if (this.index + this.step > s.length) {
+			this.index = Math.max(0, s.length - this.step);
+		}
+	}
+
+	goToEnd() {
+		const n = this.binder.sides.length;
+		const last = this.view === 'spread' ? (n % 2 === 0 ? n - 2 : n - 1) : n - 1;
+		this.index = Math.max(0, last);
 	}
 
 	visibleSides(): BinderSide[] {
