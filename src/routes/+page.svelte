@@ -6,6 +6,8 @@
 	import CardPreview from '$lib/components/CardPreview.svelte';
 	import PrintSheet from '$lib/components/PrintSheet.svelte';
 	import EditBinder from '$lib/components/EditBinder.svelte';
+	import BinderBar from '$lib/components/BinderBar.svelte';
+	import ProfilePrompt from '$lib/components/ProfilePrompt.svelte';
 	import { store } from '$lib/binderStore.svelte';
 	import { cloud } from '$lib/cloud.svelte';
 
@@ -42,14 +44,17 @@
 	<div class="app">
 		<section class="stage">
 			<div class="topbar">
-				<button class="edit" onclick={() => (editing = true)}>Upraviť binder</button>
-				<div class="views">
-					<button class:active={store.view === 'single'} onclick={() => (store.view = 'single')}
-						>Single 3×3</button
-					>
-					<button class:active={store.view === 'spread'} onclick={() => (store.view = 'spread')}
-						>Double 3×3</button
-					>
+				<BinderBar />
+				<div class="right">
+					<button class="edit" onclick={() => (editing = true)}>Upraviť binder</button>
+					<div class="views">
+						<button class:active={store.view === 'single'} onclick={() => (store.view = 'single')}
+							>Single 3×3</button
+						>
+						<button class:active={store.view === 'spread'} onclick={() => (store.view = 'spread')}
+							>Double 3×3</button
+						>
+					</div>
 				</div>
 			</div>
 
@@ -71,6 +76,10 @@
 
 	{#if editing}
 		<EditBinder onClose={() => (editing = false)} />
+	{/if}
+
+	{#if cloud.needsProfile}
+		<ProfilePrompt />
 	{/if}
 
 	<PrintSheet />
@@ -102,6 +111,12 @@
 		justify-content: space-between;
 		gap: 1rem;
 		margin-bottom: 1.25rem;
+		flex-wrap: wrap;
+	}
+	.right {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
 		flex-wrap: wrap;
 	}
 	.edit {

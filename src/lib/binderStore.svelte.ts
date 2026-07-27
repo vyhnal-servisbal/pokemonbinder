@@ -7,6 +7,13 @@ const newSideId = () => `sd_${Date.now().toString(36)}_${seq++}`;
 
 export const MIN_PAGES = 36;
 
+// a fresh, empty binder with MIN_PAGES blank pages
+export function makeEmptyBinder(name: string): Binder {
+	const sides: Binder['sides'] = [];
+	for (let i = 0; i < MIN_PAGES; i++) sides.push({ id: newSideId(), items: [] });
+	return { id: `b_${Date.now().toString(36)}_${seq++}`, name, sides };
+}
+
 function occupiedCells(side: BinderSide): Set<string> {
 	const s = new Set<string>();
 	for (const it of side.items) {

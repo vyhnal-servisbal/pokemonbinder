@@ -2,6 +2,7 @@
 	import { cloud } from '$lib/cloud.svelte';
 
 	let name = $state('');
+	let msg = $state<string | null>(null);
 
 	function fmt(iso: string) {
 		const d = new Date(iso);
@@ -14,8 +15,14 @@
 	}
 
 	async function save() {
-		await cloud.saveSession(name);
-		name = '';
+		const err = await cloud.saveSession(name);
+		if (err) {
+			msg = err;
+		} else {
+			msg = 'Uložené';
+			name = '';
+		}
+		setTimeout(() => (msg = null), 2600);
 	}
 
 	function restore(id: string) {
@@ -34,6 +41,13 @@
 			<button class="save" onclick={save}>Uložiť</button>
 		</div>
 
+		{#if cloud.ready && !cloud.session}
+			<p class="warn">Nepripojené k cloudu. Zapni Anonymous sign-ins v Supabase.</p>
+		{/if}
+		{#if msg}
+			<p class="msg">{msg}</p>
+		{/if}
+
 		{#if cloud.sessions.length === 0}
 			<p class="empty">Zatiaľ žiadne uložené stavy.</p>
 		{:else}
@@ -42,7 +56,7 @@
 					<li>
 						<button class="restore" onclick={() => restore(s.id)} title="Obnoviť tento stav">
 							<span class="name">{s.name}</span>
-							<span class="time">{fmt(s.created_at)}</span>
+							<span class="time">{s.profile_name ? s.profile_name + ' · ' : ''}{fmt(s.created_at)}</span>
 						</button>
 						<button class="del" onclick={() => cloud.deleteSession(s.id)} title="Zmazať">×</button>
 					</li>
@@ -100,6 +114,17 @@
 		margin: 0;
 		font-size: 0.78rem;
 		opacity: 0.5;
+	}
+	.warn {
+		margin: 0;
+		font-size: 0.78rem;
+		color: #ffcf8b;
+		line-height: 1.4;
+	}
+	.msg {
+		margin: 0;
+		font-size: 0.8rem;
+		color: #8de0b0;
 	}
 	.list {
 		list-style: none;
