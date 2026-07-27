@@ -19,12 +19,13 @@ export interface CardSet {
 	name: string;
 }
 
+// search results use a small low-res thumbnail (fast); full res is fetched on add via getCard
 function toCard(c: Brief): PokemonCard {
 	return {
 		id: c.id,
 		name: c.name,
 		number: c.localId,
-		image: c.image ? `${c.image}/high.png` : undefined
+		image: c.image ? `${c.image}/low.webp` : undefined
 	};
 }
 
