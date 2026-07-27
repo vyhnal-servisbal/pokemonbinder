@@ -100,9 +100,9 @@
 		position: sticky;
 		top: 0;
 		z-index: 40;
-		background: rgba(18, 19, 26, 0.82);
-		backdrop-filter: blur(12px);
-		border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+		background: rgba(11, 12, 17, 0.72);
+		backdrop-filter: blur(14px);
+		border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 	}
 	.topbar-inner {
 		display: flex;
@@ -175,6 +175,25 @@
 	}
 	.stage {
 		min-width: 0;
+		position: relative;
+		isolation: isolate;
+	}
+	.stage::before {
+		content: '';
+		position: absolute;
+		left: 50%;
+		top: 8%;
+		width: 78%;
+		height: 82%;
+		transform: translateX(-50%);
+		background: radial-gradient(closest-side, rgba(var(--accent-rgb), 0.12), transparent 72%);
+		filter: blur(50px);
+		z-index: 0;
+		pointer-events: none;
+	}
+	.stage :global(.binder) {
+		position: relative;
+		z-index: 1;
 	}
 	.sidebar {
 		position: sticky;

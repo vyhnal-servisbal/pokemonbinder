@@ -101,9 +101,14 @@
 		flex-direction: column;
 		gap: 0.8rem;
 		padding: 1.2rem;
-		border-radius: 14px;
-		background: rgba(255, 255, 255, 0.04);
-		border: 1px solid rgba(255, 255, 255, 0.07);
+		border-radius: 18px;
+		background: rgba(255, 255, 255, 0.035);
+		backdrop-filter: blur(22px);
+		-webkit-backdrop-filter: blur(22px);
+		border: 1px solid rgba(255, 255, 255, 0.09);
+		box-shadow:
+			0 24px 60px rgba(0, 0, 0, 0.45),
+			inset 0 1px 0 rgba(255, 255, 255, 0.07);
 	}
 	h2 {
 		margin: 0;
