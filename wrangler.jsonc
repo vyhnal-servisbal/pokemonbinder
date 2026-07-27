@@ -9,6 +9,7 @@
 	},
 	"vars": {
 		"PUBLIC_SUPABASE_URL": "https://kjzcdlsopiqkrzgfvdlv.supabase.co",
-		"PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_mL9wqIvCJ1fpxibt-ZmncQ_GNp9_nYx"
+		"PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_mL9wqIvCJ1fpxibt-ZmncQ_GNp9_nYx",
+		"PUBLIC_POKEMONTCG_KEY": "207813eb-7ce2-408f-96e3-2940f70f1d80"
 	}
 }
