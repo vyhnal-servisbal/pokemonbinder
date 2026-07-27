@@ -45,9 +45,9 @@
 		max-width: 900px;
 		padding: 1.5rem;
 		border-radius: 18px;
-		background: linear-gradient(160deg, #121217, #0a0a0d);
-		border: 1px solid rgba(255, 255, 255, 0.07);
-		box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6);
+		background: linear-gradient(160deg, #20212a, #16171e);
+		border: 1px solid rgba(255, 255, 255, 0.09);
+		box-shadow: 0 30px 70px rgba(0, 0, 0, 0.65);
 		/* subtle flash + fade whenever the page changes */
 		animation: page-flash 0.22s ease-out;
 	}

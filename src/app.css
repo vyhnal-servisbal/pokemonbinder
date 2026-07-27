@@ -1,6 +1,8 @@
 :root {
 	color-scheme: dark;
-	--bg: #17181f;
+	--bg: #0b0c11;
+	--accent: #8b5cf6;
+	--accent-rgb: 139, 92, 246;
 	font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 
@@ -17,7 +19,7 @@ body {
 body {
 	min-height: 100vh;
 	background:
-		radial-gradient(1200px 760px at 50% -12%, #24262f 0%, transparent 58%),
+		radial-gradient(1100px 700px at 50% -12%, #15171f 0%, transparent 62%),
 		var(--bg);
 	color: #ece9f7;
 }
