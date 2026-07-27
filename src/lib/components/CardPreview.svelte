@@ -36,10 +36,7 @@
 		<div class="meta">
 			<div class="title">{card.name}</div>
 			{#if sub}<div class="sub">{sub}</div>{/if}
-			<label class="toggle">
-				<input type="checkbox" bind:checked={holoOn} />
-				<span>Holo efekt</span>
-			</label>
+			<button class="holo-btn" class:on={holoOn} onclick={() => (holoOn = !holoOn)}>✨ Holo</button>
 		</div>
 
 		<button class="close" onclick={onClose} aria-label="Zavrieť">×</button>
@@ -64,7 +61,7 @@
 		flex-direction: column;
 		align-items: center;
 		gap: 1rem;
-		padding: 1.5rem;
+		padding: 1.5rem 2.5rem;
 		border-radius: 16px;
 		background: linear-gradient(150deg, #23242e, #16171d);
 		border: 1px solid rgba(255, 255, 255, 0.09);
@@ -86,20 +83,23 @@
 		opacity: 0.6;
 		margin-top: 0.15rem;
 	}
-	.toggle {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.45rem;
+	.holo-btn {
 		margin-top: 0.9rem;
+		padding: 0.5rem 1rem;
+		border-radius: 12px;
+		border: 1px solid rgba(255, 255, 255, 0.12);
+		background: rgba(255, 255, 255, 0.04);
+		color: #d8d2f0;
+		cursor: pointer;
 		font-size: 0.85rem;
-		cursor: pointer;
-		user-select: none;
 	}
-	.toggle input {
-		width: 1rem;
-		height: 1rem;
-		accent-color: var(--accent);
-		cursor: pointer;
+	.holo-btn:hover {
+		border-color: var(--accent);
+	}
+	.holo-btn.on {
+		background: rgba(var(--accent-rgb), 0.18);
+		border-color: var(--accent);
+		color: #d1f6ef;
 	}
 	.close {
 		position: absolute;

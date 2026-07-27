@@ -10,14 +10,18 @@
 	import PromptModal from '$lib/components/PromptModal.svelte';
 	import ProfilePrompt from '$lib/components/ProfilePrompt.svelte';
 	import PokeBuddy from '$lib/components/PokeBuddy.svelte';
+	import BuddyConfig from '$lib/components/BuddyConfig.svelte';
 	import { store } from '$lib/binderStore.svelte';
 	import { cloud } from '$lib/cloud.svelte';
+	import { buddies } from '$lib/buddyStore.svelte';
 
 	let editing = $state(false);
+	let configuring = $state(false);
 	let prompt = $state<{ mode: 'new' | 'name' } | null>(null);
 
 	onMount(() => {
 		cloud.init();
+		buddies.init();
 	});
 
 	// auto-save: reading the whole binder makes this effect depend on every change
@@ -57,13 +61,13 @@
 	<div class="bg-deco" aria-hidden="true">
 		<svg class="ball ball-1" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.5">
 			<circle cx="50" cy="50" r="46" />
-			<path d="M4 50 H35 M65 50 H96" />
+			<path d="M10 50 H35 M65 50 H90" />
 			<circle cx="50" cy="50" r="14" />
 			<circle cx="50" cy="50" r="5.5" />
 		</svg>
 		<svg class="ball ball-2" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.5">
 			<circle cx="50" cy="50" r="46" />
-			<path d="M4 50 H35 M65 50 H96" />
+			<path d="M10 50 H35 M65 50 H90" />
 			<circle cx="50" cy="50" r="14" />
 			<circle cx="50" cy="50" r="5.5" />
 		</svg>
@@ -91,6 +95,7 @@
 				<button class="holo" class:on={store.holoOn} onclick={() => (store.holoOn = !store.holoOn)}
 					>✨ Holo</button
 				>
+				<button class="holo" onclick={() => (configuring = true)} title="Pokémon kamaráti">🐾</button>
 				<button class="edit" onclick={() => (editing = true)}>✏️ Upraviť binder</button>
 				<div class="views">
 					<button class:active={store.view === 'single'} onclick={() => (store.view = 'single')}
@@ -121,6 +126,10 @@
 
 	{#if editing}
 		<EditBinder onClose={() => (editing = false)} />
+	{/if}
+
+	{#if configuring}
+		<BuddyConfig onClose={() => (configuring = false)} />
 	{/if}
 
 	{#if prompt}

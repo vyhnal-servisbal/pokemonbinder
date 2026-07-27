@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { fly } from 'svelte/transition';
-	import { searchCards, listSets, type CardSet } from '$lib/cardApi';
+	import { searchCards, getCard, listSets, type CardSet } from '$lib/cardApi';
 	import { store } from '$lib/binderStore.svelte';
 	import { cloud } from '$lib/cloud.svelte';
 	import type { PokemonCard } from '$lib/types';
@@ -52,8 +52,9 @@
 		run();
 	}
 
-	function add(card: PokemonCard) {
-		say(store.addCard(card) ? `Pridané: ${card.name}` : 'Na tejto strane nie je voľné vrecko');
+	async function add(card: PokemonCard) {
+		const full = (await getCard(card.id)) ?? card;
+		say(store.addCard(full) ? `Pridané: ${full.name}` : 'Na tejto strane nie je voľné vrecko');
 	}
 
 	async function onFile(e: Event) {
