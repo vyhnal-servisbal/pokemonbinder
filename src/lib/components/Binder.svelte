@@ -27,7 +27,7 @@
 		>
 
 		{#key store.index}
-			<div class="spread" class:paired={!!right}>
+			<div class="spread" class:single={!isSpread} class:paired={!!right}>
 				{#if left}<div class="half"><BinderPage side={left} /></div>{/if}
 				{#if right}<div class="half"><BinderPage side={right} /></div>{/if}
 			</div>
@@ -66,9 +66,9 @@
 		align-items: flex-start;
 		justify-content: center;
 		gap: 1.75rem;
-		flex: 0 1 auto;
+		flex: 1;
 		min-width: 0;
-		max-width: 100%;
+		max-width: 900px;
 		padding: 1.5rem;
 		border-radius: 24px;
 		background:
@@ -81,10 +81,17 @@
 		/* subtle flash + fade whenever the page changes */
 		animation: page-flash 0.22s ease-out;
 	}
-	/* fixed page width so a single page matches each page of a spread (no size jump) */
+	/* each page is (spread - gap) / 2 so a lone/single page matches a page of a spread */
 	.half {
-		flex: 0 1 410px;
+		width: calc((100% - 1.75rem) / 2);
 		min-width: 0;
+	}
+	.spread.single {
+		max-width: 460px;
+		margin: 0 auto;
+	}
+	.spread.single .half {
+		width: 100%;
 	}
 	/* binder rings only when two pages are shown */
 	.spread.paired::before {
