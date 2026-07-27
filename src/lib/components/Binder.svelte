@@ -113,7 +113,7 @@
 		border-radius: 18px;
 		background: linear-gradient(145deg, #2c2150, #1a1233);
 		box-shadow: 0 30px 70px rgba(0, 0, 0, 0.55);
-		perspective: 2200px;
+		perspective: 1700px;
 	}
 	.spread.single {
 		max-width: 480px;
@@ -162,12 +162,12 @@
 	.flip.next {
 		right: 1.5rem;
 		transform-origin: left center;
-		animation: flip-next 0.66s ease-in-out forwards;
+		animation: flip-next 0.85s cubic-bezier(0.66, 0, 0.34, 1) forwards;
 	}
 	.flip.prev {
 		left: 1.5rem;
 		transform-origin: right center;
-		animation: flip-prev 0.66s ease-in-out forwards;
+		animation: flip-prev 0.85s cubic-bezier(0.66, 0, 0.34, 1) forwards;
 	}
 	.flip.single {
 		width: calc(100% - 3rem);
@@ -194,30 +194,36 @@
 
 	@keyframes flip-next {
 		0% {
-			transform: rotateY(0deg);
+			transform: rotateY(0deg) scale(1);
 			filter: brightness(1);
+			box-shadow: 0 10px 20px rgba(0, 0, 0, 0.35);
 		}
 		50% {
-			transform: rotateY(-90deg);
-			filter: brightness(0.72);
+			transform: rotateY(-90deg) scale(1.06);
+			filter: brightness(0.76);
+			box-shadow: -55px 34px 64px rgba(0, 0, 0, 0.6);
 		}
 		100% {
-			transform: rotateY(-180deg);
+			transform: rotateY(-180deg) scale(1);
 			filter: brightness(1);
+			box-shadow: 0 10px 20px rgba(0, 0, 0, 0.35);
 		}
 	}
 	@keyframes flip-prev {
 		0% {
-			transform: rotateY(0deg);
+			transform: rotateY(0deg) scale(1);
 			filter: brightness(1);
+			box-shadow: 0 10px 20px rgba(0, 0, 0, 0.35);
 		}
 		50% {
-			transform: rotateY(90deg);
-			filter: brightness(0.72);
+			transform: rotateY(90deg) scale(1.06);
+			filter: brightness(0.76);
+			box-shadow: 55px 34px 64px rgba(0, 0, 0, 0.6);
 		}
 		100% {
-			transform: rotateY(180deg);
+			transform: rotateY(180deg) scale(1);
 			filter: brightness(1);
+			box-shadow: 0 10px 20px rgba(0, 0, 0, 0.35);
 		}
 	}
 
