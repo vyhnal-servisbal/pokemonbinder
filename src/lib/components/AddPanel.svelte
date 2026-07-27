@@ -1,15 +1,22 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { fly } from 'svelte/transition';
-	import { searchCards, getCard } from '$lib/tcgdex';
+	import { searchCards, listSets, type CardSet } from '$lib/cardApi';
 	import { store } from '$lib/binderStore.svelte';
 	import { cloud } from '$lib/cloud.svelte';
 	import type { PokemonCard } from '$lib/types';
 
 	let query = $state('');
+	let setId = $state('');
+	let sets = $state<CardSet[]>([]);
 	let results = $state<PokemonCard[]>([]);
 	let loading = $state(false);
 	let flash = $state<string | null>(null);
 	let timer: ReturnType<typeof setTimeout>;
+
+	onMount(async () => {
+		sets = await listSets();
+	});
 
 	function say(msg: string) {
 		flash = msg;
@@ -17,28 +24,36 @@
 		timer = setTimeout(() => (flash = null), 1800);
 	}
 
-	function onInput() {
-		clearTimeout(timer);
-		if (query.trim().length < 2) {
+	async function run() {
+		const name = query.trim();
+		if (!name && !setId) {
 			results = [];
 			return;
 		}
-		timer = setTimeout(run, 350);
-	}
-
-	async function run() {
 		loading = true;
 		try {
-			results = await searchCards(query.trim());
+			results = await searchCards({ name, setId });
 		} finally {
 			loading = false;
 		}
 	}
 
-	async function add(card: PokemonCard) {
-		// enrich with full data (rarity drives the holo shine) then place it
-		const full = (await getCard(card.id)) ?? card;
-		say(store.addCard(full) ? `Pridané: ${full.name}` : 'Na tejto strane nie je voľné vrecko');
+	function onInput() {
+		clearTimeout(timer);
+		timer = setTimeout(run, 320);
+	}
+
+	function onSetChange() {
+		run();
+	}
+
+	function clearQuery() {
+		query = '';
+		run();
+	}
+
+	function add(card: PokemonCard) {
+		say(store.addCard(card) ? `Pridané: ${card.name}` : 'Na tejto strane nie je voľné vrecko');
 	}
 
 	async function onFile(e: Event) {
@@ -54,17 +69,30 @@
 <div class="panel">
 	<h2>Pridať kartu</h2>
 
-	<input
-		class="search"
-		type="text"
-		placeholder="Hľadaj kartu, napr. Charizard"
-		bind:value={query}
-		oninput={onInput}
-	/>
+	<div class="searchbox">
+		<input
+			class="search"
+			type="text"
+			placeholder="Hľadaj podľa názvu..."
+			bind:value={query}
+			oninput={onInput}
+		/>
+		{#if query}
+			<button class="clear" onclick={clearQuery} title="Vymazať" aria-label="Vymazať hľadanie">✕</button
+			>
+		{/if}
+	</div>
+
+	<select class="setsel" bind:value={setId} onchange={onSetChange} aria-label="Filter podľa setu">
+		<option value="">Všetky sety</option>
+		{#each sets as s (s.id)}
+			<option value={s.id}>{s.name}</option>
+		{/each}
+	</select>
 
 	{#if loading}
 		<p class="status">Hľadám...</p>
-	{:else if query.trim().length >= 2 && results.length === 0}
+	{:else if (query.trim() || setId) && results.length === 0}
 		<p class="status">Nič sa nenašlo</p>
 	{/if}
 
@@ -115,9 +143,12 @@
 		font-size: 1rem;
 		font-weight: 700;
 	}
+	.searchbox {
+		position: relative;
+	}
 	.search {
 		width: 100%;
-		padding: 0.6rem 0.75rem;
+		padding: 0.6rem 2.1rem 0.6rem 0.75rem;
 		border-radius: 10px;
 		border: 1px solid rgba(255, 255, 255, 0.14);
 		background: rgba(0, 0, 0, 0.25);
@@ -127,6 +158,42 @@
 	.search:focus {
 		outline: none;
 		border-color: var(--accent);
+	}
+	.clear {
+		position: absolute;
+		right: 0.4rem;
+		top: 50%;
+		transform: translateY(-50%);
+		width: 22px;
+		height: 22px;
+		border: 0;
+		border-radius: 6px;
+		background: rgba(255, 255, 255, 0.1);
+		color: #fff;
+		cursor: pointer;
+		font-size: 0.72rem;
+		line-height: 1;
+	}
+	.clear:hover {
+		background: rgba(255, 255, 255, 0.22);
+	}
+	.setsel {
+		width: 100%;
+		padding: 0.55rem 0.65rem;
+		border-radius: 10px;
+		border: 1px solid rgba(255, 255, 255, 0.14);
+		background: rgba(0, 0, 0, 0.25);
+		color: #fff;
+		font-size: 0.85rem;
+		cursor: pointer;
+	}
+	.setsel:focus {
+		outline: none;
+		border-color: var(--accent);
+	}
+	.setsel option {
+		background: #1a1b22;
+		color: #fff;
 	}
 	.status {
 		margin: 0;
