@@ -34,4 +34,6 @@ export interface Binder {
 	id: string;
 	name: string;
 	sides: BinderSide[];
+	inside?: string; // custom binder fill color
+	outline?: string; // custom binder border color
 }

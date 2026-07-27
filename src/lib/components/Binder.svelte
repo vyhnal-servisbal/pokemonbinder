@@ -5,6 +5,29 @@
 	const isSpread = $derived(store.view === 'spread');
 	const left = $derived(store.binder.sides[store.index]);
 	const right = $derived(isSpread ? store.binder.sides[store.index + 1] : undefined);
+
+	// posunie hex o daný offset na kanál (svetlejšie/tmavšie), so zachovaním pôvodného gradientu
+	function shade(hex: string, amt: number): string {
+		const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+		if (!m) return hex;
+		const n = parseInt(m[1], 16);
+		const clamp = (v: number) => Math.max(0, Math.min(255, v));
+		const r = clamp(((n >> 16) & 255) + amt);
+		const g = clamp(((n >> 8) & 255) + amt);
+		const b = clamp((n & 255) + amt);
+		return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
+	}
+
+	const spreadStyle = $derived.by(() => {
+		const parts: string[] = [];
+		if (store.binder.inside) {
+			// z vybranej farby zložíme ten istý gradient (svetlejšie hore, tmavšie dole)
+			const c = store.binder.inside;
+			parts.push(`--b-inside:linear-gradient(160deg, ${shade(c, 15)}, ${shade(c, -15)})`);
+		}
+		if (store.binder.outline) parts.push(`--b-outline:${store.binder.outline}`);
+		return parts.join(';');
+	});
 </script>
 
 <div class="binder">
@@ -16,7 +39,7 @@
 	>
 
 	{#key store.index}
-		<div class="spread" class:single={!isSpread} class:paired={!!right}>
+		<div class="spread" class:single={!isSpread} class:paired={!!right} style={spreadStyle}>
 			{#if left}<div class="half"><BinderPage side={left} /></div>{/if}
 			{#if right}<div class="half"><BinderPage side={right} /></div>{/if}
 		</div>
@@ -49,8 +72,8 @@
 		border-radius: 24px;
 		background:
 			linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 20%),
-			linear-gradient(160deg, #121319, #0a0b0e);
-		border: 1px solid rgba(255, 255, 255, 0.08);
+			var(--b-inside, linear-gradient(160deg, #121319, #0a0b0e));
+		border: 1px solid var(--b-outline, rgba(255, 255, 255, 0.08));
 		box-shadow:
 			0 45px 100px rgba(0, 0, 0, 0.6),
 			inset 0 1px 0 rgba(255, 255, 255, 0.08);

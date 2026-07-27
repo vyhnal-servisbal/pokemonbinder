@@ -53,11 +53,11 @@
 		setTimeout(() => (particles = particles.filter((p) => !ids.has(p.id))), 1700);
 	}
 
-	function onErr(e: Event, name: string) {
+	function onErr(e: Event, b: Buddy) {
 		const img = e.currentTarget as HTMLImageElement;
 		if (!img.dataset.fb) {
 			img.dataset.fb = '1';
-			img.src = `https://play.pokemonshowdown.com/sprites/gen5/${name}.png`;
+			img.src = `https://play.pokemonshowdown.com/sprites/gen5${b.shiny ? '-shiny' : ''}/${b.name}.png`;
 		}
 	}
 </script>
@@ -76,10 +76,10 @@
 					<span class="glow"></span>
 					<img
 						class="sprite"
-						src="https://play.pokemonshowdown.com/sprites/ani/{b.name}.gif"
+						src="https://play.pokemonshowdown.com/sprites/{b.shiny ? 'ani-shiny' : 'ani'}/{b.name}.gif"
 						alt={b.label}
 						draggable="false"
-						onerror={(e) => onErr(e, b.name)}
+						onerror={(e) => onErr(e, b)}
 					/>
 				</button>
 			{/each}

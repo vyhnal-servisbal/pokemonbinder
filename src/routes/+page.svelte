@@ -11,6 +11,7 @@
 	import ProfilePrompt from '$lib/components/ProfilePrompt.svelte';
 	import PokeBuddy from '$lib/components/PokeBuddy.svelte';
 	import BuddyConfig from '$lib/components/BuddyConfig.svelte';
+	import CursorGlow from '$lib/components/CursorGlow.svelte';
 	import { store } from '$lib/binderStore.svelte';
 	import { cloud } from '$lib/cloud.svelte';
 	import { buddies } from '$lib/buddyStore.svelte';
@@ -59,13 +60,25 @@
 	<div class="center">Načítavam...</div>
 {:else}
 	<div class="bg-deco" aria-hidden="true">
-		<svg class="ball ball-1" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.5">
+		<svg class="ball ball-left" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.2">
 			<circle cx="50" cy="50" r="46" />
 			<path d="M10 50 H35 M65 50 H90" />
 			<circle cx="50" cy="50" r="14" />
 			<circle cx="50" cy="50" r="5.5" />
 		</svg>
-		<svg class="ball ball-2" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.5">
+		<svg class="ball ball-right" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.2">
+			<circle cx="50" cy="50" r="46" />
+			<path d="M10 50 H35 M65 50 H90" />
+			<circle cx="50" cy="50" r="14" />
+			<circle cx="50" cy="50" r="5.5" />
+		</svg>
+		<svg class="ball ball-top" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.2">
+			<circle cx="50" cy="50" r="46" />
+			<path d="M10 50 H35 M65 50 H90" />
+			<circle cx="50" cy="50" r="14" />
+			<circle cx="50" cy="50" r="5.5" />
+		</svg>
+		<svg class="ball ball-bottom" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.2">
 			<circle cx="50" cy="50" r="46" />
 			<path d="M10 50 H35 M65 50 H90" />
 			<circle cx="50" cy="50" r="14" />
@@ -154,6 +167,8 @@
 	<PrintSheet />
 
 	<PokeBuddy />
+
+	<CursorGlow />
 {/if}
 
 <style>
@@ -172,25 +187,42 @@
 		z-index: -1;
 		overflow: hidden;
 		pointer-events: none;
-		color: rgba(var(--accent-rgb), 0.07);
+		color: rgba(var(--accent-rgb), 0.09);
 	}
 	.ball {
 		position: absolute;
 	}
-	.ball-1 {
-		width: 620px;
-		height: 620px;
-		right: -150px;
-		bottom: -160px;
-		transform: rotate(-15deg);
+	.bg-deco :global(circle),
+	.bg-deco :global(path) {
+		vector-effect: non-scaling-stroke;
 	}
-	.ball-2 {
-		width: 320px;
-		height: 320px;
-		left: -70px;
-		top: 60px;
-		transform: rotate(18deg);
-		opacity: 0.7;
+	.ball-left {
+		left: -45vh;
+		top: 50%;
+		width: 90vh;
+		height: 90vh;
+		transform: translateY(-50%);
+	}
+	.ball-right {
+		right: -45vh;
+		top: 50%;
+		width: 90vh;
+		height: 90vh;
+		transform: translateY(-50%);
+	}
+	.ball-top {
+		left: 50%;
+		top: 5%;
+		width: 74px;
+		height: 74px;
+		transform: translateX(-50%);
+	}
+	.ball-bottom {
+		left: 50%;
+		bottom: 5%;
+		width: 74px;
+		height: 74px;
+		transform: translateX(-50%);
 	}
 
 	.topbar {

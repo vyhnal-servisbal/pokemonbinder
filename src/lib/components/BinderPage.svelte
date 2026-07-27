@@ -36,7 +36,8 @@
 
 	function drop(row: number, col: number) {
 		hoverKey = null;
-		store.dropOn(side.id, row, col);
+		if (store.searchDrag) store.dropSearchCard(side.id, row, col);
+		else store.dropOn(side.id, row, col);
 	}
 
 	function toggleWide(e: MouseEvent, item: PlacedItem) {

@@ -3,6 +3,7 @@ interface Buddy {
 	label: string;
 	fx: string; // particle emoji
 	color: string; // glow color
+	shiny?: boolean;
 }
 
 const LS = 'pb_buddies';
@@ -91,6 +92,11 @@ class BuddyStore {
 
 	remove(name: string) {
 		this.list = this.list.filter((b) => b.name !== name);
+		this.persist();
+	}
+
+	toggleShiny(name: string) {
+		this.list = this.list.map((b) => (b.name === name ? { ...b, shiny: !b.shiny } : b));
 		this.persist();
 	}
 }

@@ -50,10 +50,7 @@ export async function searchCards(opts: { name?: string; setId?: string }): Prom
 	const res = await fetch(`${API}/cards?name=${encodeURIComponent(name)}`);
 	if (!res.ok) return [];
 	const data: Brief[] = await res.json();
-	return data
-		.filter((c) => c.image)
-		.slice(0, 150)
-		.map(toCard);
+	return data.filter((c) => c.image).map(toCard);
 }
 
 // full card (rarity + set) to enrich a card on add, so the holo effect works

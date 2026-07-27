@@ -55,7 +55,14 @@
 			{#if buddies.list.length}
 				<div class="chips">
 					{#each buddies.list as b (b.name)}
-						<span class="chip">
+						<span class="chip" class:shiny={b.shiny}>
+							<button
+								class="sh"
+								class:on={b.shiny}
+								onclick={() => buddies.toggleShiny(b.name)}
+								title="Shiny"
+								aria-label="Shiny">✨</button
+							>
 							<span>{b.fx} {b.label}</span>
 							<button class="rm" onclick={() => buddies.remove(b.name)} aria-label="Odobrať">✕</button
 							>
@@ -158,12 +165,32 @@
 	.chip {
 		display: inline-flex;
 		align-items: center;
-		gap: 0.4rem;
-		padding: 0.35rem 0.4rem 0.35rem 0.7rem;
+		gap: 0.35rem;
+		padding: 0.3rem 0.4rem;
 		border-radius: 999px;
 		background: rgba(var(--accent-rgb), 0.14);
 		border: 1px solid rgba(var(--accent-rgb), 0.35);
 		font-size: 0.8rem;
+	}
+	.chip.shiny {
+		background: rgba(240, 200, 90, 0.16);
+		border-color: rgba(240, 200, 90, 0.5);
+	}
+	.sh {
+		width: 20px;
+		height: 20px;
+		border: 0;
+		border-radius: 50%;
+		background: rgba(255, 255, 255, 0.1);
+		color: #fff;
+		cursor: pointer;
+		font-size: 0.62rem;
+		line-height: 1;
+		opacity: 0.5;
+	}
+	.sh.on {
+		background: rgba(240, 200, 90, 0.9);
+		opacity: 1;
 	}
 	.rm {
 		width: 18px;

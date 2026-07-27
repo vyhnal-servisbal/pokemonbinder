@@ -52,6 +52,11 @@
 		run();
 	}
 
+	function clearSet() {
+		setId = '';
+		run();
+	}
+
 	async function add(card: PokemonCard) {
 		const full = (await getCard(card.id)) ?? card;
 		say(store.addCard(full) ? `Pridané: ${full.name}` : 'Na tejto strane nie je voľné vrecko');
@@ -84,12 +89,17 @@
 		{/if}
 	</div>
 
-	<select class="setsel" bind:value={setId} onchange={onSetChange} aria-label="Filter podľa setu">
-		<option value="">Všetky sety</option>
-		{#each sets as s (s.id)}
-			<option value={s.id}>{s.name}</option>
-		{/each}
-	</select>
+	<div class="setbox">
+		<select class="setsel" bind:value={setId} onchange={onSetChange} aria-label="Filter podľa setu">
+			<option value="">Všetky sety</option>
+			{#each sets as s (s.id)}
+				<option value={s.id}>{s.name}</option>
+			{/each}
+		</select>
+		{#if setId}
+			<button class="clear-set" onclick={clearSet} title="Zrušiť set" aria-label="Zrušiť set">✕</button>
+		{/if}
+	</div>
 
 	{#if loading}
 		<p class="status">Hľadám...</p>
@@ -99,7 +109,17 @@
 
 	<div class="results">
 		{#each results as card (card.id)}
-			<button class="result" onclick={() => add(card)} title={card.name}>
+			<button
+				class="result"
+				draggable="true"
+				ondragstart={(e) => {
+					e.dataTransfer?.setData('text/plain', card.id);
+					store.startSearchDrag(card);
+				}}
+				ondragend={() => store.endSearchDrag()}
+				onclick={() => add(card)}
+				title={card.name}
+			>
 				{#if card.image}
 					<img src={card.image} alt={card.name} loading="lazy" />
 				{:else}
@@ -178,8 +198,26 @@
 	.clear:hover {
 		background: rgba(255, 255, 255, 0.22);
 	}
+	.setbox {
+		display: flex;
+		gap: 0.4rem;
+	}
+	.clear-set {
+		flex: none;
+		width: 34px;
+		border-radius: 10px;
+		border: 1px solid rgba(255, 255, 255, 0.14);
+		background: rgba(255, 255, 255, 0.06);
+		color: #fff;
+		cursor: pointer;
+		font-size: 0.72rem;
+	}
+	.clear-set:hover {
+		background: rgba(255, 255, 255, 0.18);
+	}
 	.setsel {
-		width: 100%;
+		flex: 1;
+		min-width: 0;
 		padding: 0.55rem 0.65rem;
 		border-radius: 10px;
 		border: 1px solid rgba(255, 255, 255, 0.14);

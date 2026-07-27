@@ -1,5 +1,6 @@
 import type { Binder, BinderSide, PlacedItem, PokemonCard } from './types';
 import { demoBinder } from './mockData';
+import { getCard } from './cardApi';
 
 let seq = 0;
 const newId = () => `it_${Date.now().toString(36)}_${seq++}`;
@@ -35,6 +36,7 @@ class BinderStore {
 	// drag state is plain (not reactive) - only read on drop
 	dragItemId: string | null = null;
 	dragFromSideId: string | null = null;
+	searchDrag = $state<PokemonCard | null>(null);
 
 	constructor() {
 		this.ensureMinPages();
@@ -191,6 +193,41 @@ class BinderStore {
 	clearDrag() {
 		this.dragItemId = null;
 		this.dragFromSideId = null;
+	}
+
+	// dragging a card from the search panel into a specific pocket
+	startSearchDrag(card: PokemonCard) {
+		const image = card.image ? card.image.replace('/low.webp', '/high.png') : undefined;
+		this.searchDrag = { ...card, image };
+	}
+	endSearchDrag() {
+		this.searchDrag = null;
+	}
+	async dropSearchCard(sideId: string, row: number, col: number) {
+		const card = this.searchDrag;
+		this.searchDrag = null;
+		if (!card) return;
+		const side = this.binder.sides.find((s) => s.id === sideId);
+		if (!side || this.itemAt(side, row, col)) return; // only into an empty pocket
+		const item: PlacedItem = {
+			id: newId(),
+			row,
+			col,
+			rowSpan: 1,
+			colSpan: 1,
+			type: 'card',
+			card
+		};
+		side.items.push(item);
+		// enrich with full-res image + rarity (holo) in the background
+		const full = await getCard(card.id);
+		if (full) {
+			const placed = side.items.find((x) => x.id === item.id);
+			if (placed && placed.card) {
+				if (full.rarity) placed.card.rarity = full.rarity;
+				if (full.image) placed.card.image = full.image;
+			}
+		}
 	}
 
 	private itemAt(side: BinderSide, row: number, col: number): PlacedItem | undefined {

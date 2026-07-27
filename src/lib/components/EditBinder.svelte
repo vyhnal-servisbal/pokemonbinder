@@ -50,6 +50,23 @@
 			</div>
 		</label>
 
+		<label class="field">
+			<span>Farba binderu</span>
+			<div class="colors">
+				<input
+					type="color"
+					value={store.binder.inside ?? '#0e0f14'}
+					oninput={(e) => (store.binder.inside = e.currentTarget.value)}
+					aria-label="Farba binderu"
+				/>
+				<button
+					type="button"
+					class="creset"
+					onclick={() => (store.binder.inside = undefined)}>Reset na pôvodnú</button
+				>
+			</div>
+		</label>
+
 		<p class="note">
 			Strany navyše sa pridajú prázdne. Uberať sa dajú len prázdne strany z konca, karty sa nezmažú.
 		</p>
@@ -135,6 +152,33 @@
 	}
 	.pages button:hover {
 		background: rgba(var(--accent-rgb), 0.3);
+	}
+	.colors {
+		display: flex;
+		align-items: center;
+		gap: 0.8rem;
+		flex-wrap: wrap;
+	}
+	.colors input[type='color'] {
+		width: 44px;
+		height: 32px;
+		padding: 0;
+		border: 1px solid rgba(255, 255, 255, 0.15);
+		border-radius: 8px;
+		background: none;
+		cursor: pointer;
+	}
+	.creset {
+		padding: 0.4rem 0.7rem;
+		border-radius: 8px;
+		border: 1px solid rgba(255, 255, 255, 0.14);
+		background: rgba(255, 255, 255, 0.06);
+		color: #d8d2f0;
+		cursor: pointer;
+		font-size: 0.75rem;
+	}
+	.creset:hover {
+		background: rgba(255, 255, 255, 0.12);
 	}
 	.note {
 		margin: 0;
