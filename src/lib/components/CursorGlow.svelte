@@ -47,22 +47,24 @@
 		position: fixed;
 		top: 0;
 		left: 0;
-		width: 460px;
-		height: 460px;
-		margin: -230px 0 0 -230px; /* center on the pointer */
+		width: 300px;
+		height: 300px;
+		margin: -150px 0 0 -150px; /* center on the pointer */
 		border-radius: 50%;
 		pointer-events: none;
 		z-index: 3;
 		opacity: 0;
 		background: radial-gradient(
 			closest-side,
-			rgba(var(--accent-rgb), 0.14),
-			rgba(var(--accent-rgb), 0.06) 45%,
-			transparent 70%
+			rgba(var(--accent-rgb), 0.07),
+			rgba(var(--accent-rgb), 0.025) 42%,
+			transparent 68%
 		);
 		mix-blend-mode: screen;
-		/* slight trail = the "fade" feel, GPU transform so it stays smooth */
-		transition: opacity 0.25s ease;
+		/* mäkký "fade": glow jemne dobieha kurzor (GPU transform, žiadny lag) */
+		transition:
+			transform 0.11s ease-out,
+			opacity 0.35s ease;
 		will-change: transform, opacity;
 	}
 	.glow.on {

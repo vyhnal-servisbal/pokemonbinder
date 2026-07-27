@@ -24,6 +24,8 @@
 			// z vybranej farby zložíme ten istý gradient (svetlejšie hore, tmavšie dole)
 			const c = store.binder.inside;
 			parts.push(`--b-inside:linear-gradient(160deg, ${shade(c, 15)}, ${shade(c, -15)})`);
+			// plocha pod kartami: tmavší odtieň tej istej farby (karty vyniknú, ostane hĺbka)
+			parts.push(`--b-page:linear-gradient(160deg, ${shade(c, -30)}, ${shade(c, -60)})`);
 		}
 		if (store.binder.outline) parts.push(`--b-outline:${store.binder.outline}`);
 		return parts.join(';');

@@ -115,7 +115,7 @@
 	.page {
 		position: relative;
 		aspect-ratio: 3 / 4;
-		background: linear-gradient(160deg, #0b0c11, #070809);
+		background: var(--b-page, linear-gradient(160deg, #0b0c11, #070809));
 		border-radius: 12px;
 		box-shadow: inset 0 0 45px rgba(0, 0, 0, 0.8);
 	}

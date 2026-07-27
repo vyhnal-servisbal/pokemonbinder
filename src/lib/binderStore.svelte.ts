@@ -197,8 +197,8 @@ class BinderStore {
 
 	// dragging a card from the search panel into a specific pocket
 	startSearchDrag(card: PokemonCard) {
-		const image = card.image ? card.image.replace('/low.webp', '/high.png') : undefined;
-		this.searchDrag = { ...card, image };
+		// card.image je už plné original.png; getCard v dropSearchCard doplní rarity
+		this.searchDrag = { ...card };
 	}
 	endSearchDrag() {
 		this.searchDrag = null;

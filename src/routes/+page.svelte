@@ -60,25 +60,25 @@
 	<div class="center">Načítavam...</div>
 {:else}
 	<div class="bg-deco" aria-hidden="true">
-		<svg class="ball ball-left" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.2">
+		<svg class="ball ball-left" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.4">
 			<circle cx="50" cy="50" r="46" />
 			<path d="M10 50 H35 M65 50 H90" />
 			<circle cx="50" cy="50" r="14" />
 			<circle cx="50" cy="50" r="5.5" />
 		</svg>
-		<svg class="ball ball-right" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.2">
+		<svg class="ball ball-right" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.4">
 			<circle cx="50" cy="50" r="46" />
 			<path d="M10 50 H35 M65 50 H90" />
 			<circle cx="50" cy="50" r="14" />
 			<circle cx="50" cy="50" r="5.5" />
 		</svg>
-		<svg class="ball ball-top" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.2">
+		<svg class="ball ball-top" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.4">
 			<circle cx="50" cy="50" r="46" />
 			<path d="M10 50 H35 M65 50 H90" />
 			<circle cx="50" cy="50" r="14" />
 			<circle cx="50" cy="50" r="5.5" />
 		</svg>
-		<svg class="ball ball-bottom" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.2">
+		<svg class="ball ball-bottom" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.4">
 			<circle cx="50" cy="50" r="46" />
 			<path d="M10 50 H35 M65 50 H90" />
 			<circle cx="50" cy="50" r="14" />
@@ -187,7 +187,7 @@
 		z-index: -1;
 		overflow: hidden;
 		pointer-events: none;
-		color: rgba(var(--accent-rgb), 0.09);
+		color: rgba(var(--accent-rgb), 0.18);
 	}
 	.ball {
 		position: absolute;
