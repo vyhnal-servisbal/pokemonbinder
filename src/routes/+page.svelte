@@ -43,6 +43,21 @@
 {#if cloud.enabled && !cloud.ready}
 	<div class="center">Načítavam...</div>
 {:else}
+	<div class="bg-deco" aria-hidden="true">
+		<svg class="ball ball-1" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.5">
+			<circle cx="50" cy="50" r="46" />
+			<path d="M4 50 H35 M65 50 H96" />
+			<circle cx="50" cy="50" r="14" />
+			<circle cx="50" cy="50" r="5.5" />
+		</svg>
+		<svg class="ball ball-2" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.5">
+			<circle cx="50" cy="50" r="46" />
+			<path d="M4 50 H35 M65 50 H96" />
+			<circle cx="50" cy="50" r="14" />
+			<circle cx="50" cy="50" r="5.5" />
+		</svg>
+	</div>
+
 	<header class="topbar">
 		<div class="topbar-inner">
 			<BinderBar
@@ -117,6 +132,34 @@
 		align-items: center;
 		justify-content: center;
 		opacity: 0.6;
+	}
+
+	/* faint Pokéball outlines in the background */
+	.bg-deco {
+		position: fixed;
+		inset: 0;
+		z-index: -1;
+		overflow: hidden;
+		pointer-events: none;
+		color: rgba(var(--accent-rgb), 0.07);
+	}
+	.ball {
+		position: absolute;
+	}
+	.ball-1 {
+		width: 620px;
+		height: 620px;
+		right: -150px;
+		bottom: -160px;
+		transform: rotate(-15deg);
+	}
+	.ball-2 {
+		width: 320px;
+		height: 320px;
+		left: -70px;
+		top: 60px;
+		transform: rotate(18deg);
+		opacity: 0.7;
 	}
 
 	.topbar {

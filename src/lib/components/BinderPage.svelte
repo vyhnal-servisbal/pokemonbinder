@@ -114,9 +114,9 @@
 	.page {
 		position: relative;
 		aspect-ratio: 3 / 4;
-		background: linear-gradient(160deg, #101116, #090a0d);
+		background: linear-gradient(160deg, #0b0c11, #070809);
 		border-radius: 12px;
-		box-shadow: inset 0 0 45px rgba(0, 0, 0, 0.75);
+		box-shadow: inset 0 0 45px rgba(0, 0, 0, 0.8);
 	}
 	.cell {
 		position: absolute;
