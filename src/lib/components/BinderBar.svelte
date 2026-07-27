@@ -105,10 +105,10 @@
 	}
 	.bar button:hover,
 	.bar select:hover {
-		border-color: #8b5cf6;
+		border-color: var(--accent);
 	}
 	.profile {
-		background: rgba(139, 92, 246, 0.2);
+		background: rgba(var(--accent-rgb), 0.2);
 		border-color: transparent;
 		font-weight: 600;
 	}
@@ -158,7 +158,7 @@
 	}
 	.dialog input:focus {
 		outline: none;
-		border-color: #8b5cf6;
+		border-color: var(--accent);
 	}
 	.actions {
 		display: flex;
@@ -181,10 +181,10 @@
 		background: rgba(255, 255, 255, 0.15);
 	}
 	.primary {
-		background: #8b5cf6;
-		color: #fff;
+		background: var(--accent);
+		color: var(--on-accent);
 	}
 	.primary:hover {
-		background: #7c4ef0;
+		background: var(--accent-strong);
 	}
 </style>

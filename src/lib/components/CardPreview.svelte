@@ -97,7 +97,7 @@
 	.toggle input {
 		width: 1rem;
 		height: 1rem;
-		accent-color: #8b5cf6;
+		accent-color: var(--accent);
 		cursor: pointer;
 	}
 	.close {

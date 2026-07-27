@@ -121,7 +121,7 @@
 	}
 	.search:focus {
 		outline: none;
-		border-color: #8b5cf6;
+		border-color: var(--accent);
 	}
 	.status {
 		margin: 0;
@@ -187,8 +187,8 @@
 		cursor: pointer;
 	}
 	.btn:hover {
-		background: rgba(139, 92, 246, 0.25);
-		border-color: #8b5cf6;
+		background: rgba(var(--accent-rgb), 0.25);
+		border-color: var(--accent);
 	}
 	.flash {
 		margin: 0;

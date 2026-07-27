@@ -97,15 +97,15 @@
 	}
 	.row input:focus {
 		outline: none;
-		border-color: #8b5cf6;
+		border-color: var(--accent);
 	}
 	.save {
 		flex: none;
 		padding: 0.55rem 0.8rem;
 		border: 0;
 		border-radius: 10px;
-		background: #8b5cf6;
-		color: #fff;
+		background: var(--accent);
+		color: var(--on-accent);
 		font-weight: 600;
 		font-size: 0.82rem;
 		cursor: pointer;
@@ -157,8 +157,8 @@
 		font-size: 0.82rem;
 	}
 	.restore:hover {
-		background: rgba(139, 92, 246, 0.18);
-		border-color: rgba(139, 92, 246, 0.5);
+		background: rgba(var(--accent-rgb), 0.18);
+		border-color: rgba(var(--accent-rgb), 0.5);
 	}
 	.name {
 		overflow: hidden;

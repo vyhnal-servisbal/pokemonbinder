@@ -66,14 +66,14 @@
 	}
 	input:focus {
 		outline: none;
-		border-color: #8b5cf6;
+		border-color: var(--accent);
 	}
 	button {
 		padding: 0.7rem;
 		border-radius: 10px;
 		border: 0;
-		background: #8b5cf6;
-		color: #fff;
+		background: var(--accent);
+		color: var(--on-accent);
 		font-weight: 600;
 		font-size: 0.95rem;
 		cursor: pointer;

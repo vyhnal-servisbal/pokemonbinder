@@ -106,7 +106,7 @@
 	}
 	.field input:focus {
 		outline: none;
-		border-color: #8b5cf6;
+		border-color: var(--accent);
 	}
 	.pages {
 		display: flex;
@@ -134,7 +134,7 @@
 		cursor: pointer;
 	}
 	.pages button:hover {
-		background: rgba(139, 92, 246, 0.3);
+		background: rgba(var(--accent-rgb), 0.3);
 	}
 	.note {
 		margin: 0;

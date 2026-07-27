@@ -139,8 +139,8 @@
 		font-size: 0.85rem;
 	}
 	.edit:hover {
-		background: rgba(139, 92, 246, 0.22);
-		border-color: #8b5cf6;
+		background: rgba(var(--accent-rgb), 0.22);
+		border-color: var(--accent);
 	}
 	.views {
 		display: flex;
@@ -160,8 +160,8 @@
 		font-size: 0.82rem;
 	}
 	.views button.active {
-		background: #8b5cf6;
-		color: #fff;
+		background: var(--accent);
+		color: var(--on-accent);
 	}
 
 	.app {
