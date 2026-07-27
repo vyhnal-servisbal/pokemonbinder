@@ -9,6 +9,7 @@
 	import BinderBar from '$lib/components/BinderBar.svelte';
 	import PromptModal from '$lib/components/PromptModal.svelte';
 	import ProfilePrompt from '$lib/components/ProfilePrompt.svelte';
+	import PokeBuddy from '$lib/components/PokeBuddy.svelte';
 	import { store } from '$lib/binderStore.svelte';
 	import { cloud } from '$lib/cloud.svelte';
 
@@ -123,6 +124,8 @@
 	{/if}
 
 	<PrintSheet />
+
+	<PokeBuddy />
 {/if}
 
 <style>
