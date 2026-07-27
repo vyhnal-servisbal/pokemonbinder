@@ -135,7 +135,7 @@
 		flex-wrap: wrap;
 		max-width: 1640px;
 		margin: 0 auto;
-		padding: 0.7rem 2.25rem;
+		padding: 0.45rem 2.25rem;
 	}
 	.menu {
 		display: flex;

@@ -68,7 +68,8 @@
 		gap: 1.75rem;
 		flex: 1;
 		min-width: 0;
-		max-width: 900px;
+		/* cap by width AND viewport height so the whole binder + pager fit without scrolling */
+		max-width: min(900px, max(300px, calc((100dvh - 250px) * 1.5 + 76px)));
 		padding: 1.5rem;
 		border-radius: 24px;
 		background:
@@ -87,7 +88,7 @@
 		min-width: 0;
 	}
 	.spread.single {
-		max-width: 460px;
+		max-width: min(460px, max(220px, calc((100dvh - 250px) * 0.75 + 48px)));
 		margin: 0 auto;
 	}
 	.spread.single .half {
