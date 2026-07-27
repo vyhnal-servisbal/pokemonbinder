@@ -53,7 +53,10 @@
 				{#if cloud.enabled}
 					<span class="save" class:on={saveLabel !== ''}>{saveLabel}</span>
 				{/if}
-				<button class="edit" onclick={() => (editing = true)}>Upraviť binder</button>
+				<button class="holo" class:on={store.holoOn} onclick={() => (store.holoOn = !store.holoOn)}
+					>✨ Holo</button
+				>
+				<button class="edit" onclick={() => (editing = true)}>✏️ Upraviť binder</button>
 				<div class="views">
 					<button class:active={store.view === 'single'} onclick={() => (store.view = 'single')}
 						>Single 3×3</button
@@ -149,12 +152,26 @@
 	.save.on {
 		opacity: 1;
 	}
-	.edit {
+	.holo {
 		padding: 0.5rem 0.9rem;
-		border-radius: 10px;
+		border-radius: 12px;
 		border: 1px solid rgba(255, 255, 255, 0.12);
 		background: rgba(255, 255, 255, 0.04);
 		color: #d8d2f0;
+		cursor: pointer;
+		font-size: 0.85rem;
+	}
+	.holo.on {
+		background: rgba(var(--accent-rgb), 0.18);
+		border-color: var(--accent);
+		color: #d1f6ef;
+	}
+	.edit {
+		padding: 0.5rem 0.9rem;
+		border-radius: 12px;
+		border: 1px solid rgba(var(--accent-rgb), 0.35);
+		background: rgba(var(--accent-rgb), 0.12);
+		color: #d1f6ef;
 		cursor: pointer;
 		font-size: 0.85rem;
 	}

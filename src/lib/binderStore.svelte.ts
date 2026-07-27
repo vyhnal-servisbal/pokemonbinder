@@ -30,6 +30,7 @@ class BinderStore {
 	view = $state<'single' | 'spread'>('spread');
 	index = $state(0);
 	preview = $state<PokemonCard | null>(null);
+	holoOn = $state(true);
 
 	// drag state is plain (not reactive) - only read on drop
 	dragItemId: string | null = null;

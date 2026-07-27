@@ -66,7 +66,8 @@
 		gap: 1rem;
 		padding: 1.5rem;
 		border-radius: 16px;
-		background: linear-gradient(150deg, #2a2050, #171030);
+		background: linear-gradient(150deg, #23242e, #16171d);
+		border: 1px solid rgba(255, 255, 255, 0.09);
 		box-shadow: 0 40px 90px rgba(0, 0, 0, 0.6);
 	}
 	.stage {

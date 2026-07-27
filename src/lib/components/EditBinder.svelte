@@ -78,7 +78,7 @@
 		gap: 1rem;
 		padding: 1.75rem;
 		border-radius: 16px;
-		background: linear-gradient(150deg, #2a2050, #171030);
+		background: linear-gradient(150deg, #23242e, #16171d);
 		box-shadow: 0 40px 90px rgba(0, 0, 0, 0.6);
 		color: #ece9f7;
 	}

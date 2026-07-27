@@ -72,7 +72,7 @@
 		background: rgba(255, 255, 255, 0.06);
 	}
 	option {
-		background: #1a1233;
+		background: #1a1b22;
 		color: #fff;
 	}
 </style>

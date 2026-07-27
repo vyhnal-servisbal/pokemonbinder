@@ -27,7 +27,7 @@
 		>
 
 		{#key store.index}
-			<div class="spread" class:single={!isSpread}>
+			<div class="spread" class:paired={!!right}>
 				{#if left}<div class="half"><BinderPage side={left} /></div>{/if}
 				{#if right}<div class="half"><BinderPage side={right} /></div>{/if}
 			</div>
@@ -41,7 +41,7 @@
 	<div class="pager">
 		<span class="count">{counter}</span>
 		<button class="trim" onclick={() => store.trimEmptyPages()} disabled={!store.lastEmpty}>
-			Odobrať prázdne strany
+			🧹 Odobrať prázdne strany
 		</button>
 	</div>
 </div>
@@ -64,10 +64,11 @@
 		position: relative;
 		display: flex;
 		align-items: flex-start;
+		justify-content: center;
 		gap: 1.75rem;
-		flex: 1;
+		flex: 0 1 auto;
 		min-width: 0;
-		max-width: 900px;
+		max-width: 100%;
 		padding: 1.5rem;
 		border-radius: 24px;
 		background:
@@ -80,18 +81,13 @@
 		/* subtle flash + fade whenever the page changes */
 		animation: page-flash 0.22s ease-out;
 	}
-	.spread.single {
-		max-width: 480px;
-		margin: 0 auto;
-	}
+	/* fixed page width so a single page matches each page of a spread (no size jump) */
 	.half {
-		width: 50%;
+		flex: 0 1 410px;
 		min-width: 0;
 	}
-	.spread.single .half {
-		width: 100%;
-	}
-	.spread:not(.single)::before {
+	/* binder rings only when two pages are shown */
+	.spread.paired::before {
 		content: '';
 		position: absolute;
 		left: 50%;
@@ -159,20 +155,26 @@
 		font-variant-numeric: tabular-nums;
 	}
 	.trim {
-		padding: 0.4rem 0.8rem;
-		border-radius: 10px;
-		border: 1px solid rgba(255, 255, 255, 0.12);
-		background: rgba(255, 255, 255, 0.04);
-		color: #d8d2f0;
+		padding: 0.45rem 0.9rem;
+		border-radius: 12px;
+		border: 1px solid rgba(var(--accent-rgb), 0.35);
+		background: rgba(var(--accent-rgb), 0.12);
+		color: #d1f6ef;
 		cursor: pointer;
 		font-size: 0.78rem;
+		transition:
+			background 0.2s,
+			border-color 0.2s;
 	}
 	.trim:hover:not(:disabled) {
+		background: rgba(var(--accent-rgb), 0.22);
 		border-color: var(--accent);
-		background: rgba(var(--accent-rgb), 0.14);
 	}
 	.trim:disabled {
 		opacity: 0.35;
 		cursor: default;
+		border-color: rgba(255, 255, 255, 0.12);
+		background: rgba(255, 255, 255, 0.04);
+		color: #d8d2f0;
 	}
 </style>

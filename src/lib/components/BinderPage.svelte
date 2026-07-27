@@ -93,7 +93,7 @@
 		>
 			{#if item.type === 'card' && item.card}
 				<button class="tap" onclick={() => item.card && store.openPreview(item.card)} aria-label={item.card.name}>
-					<Card card={item.card} />
+					<Card card={item.card} showHolo={store.holoOn} />
 				</button>
 			{:else if item.type === 'image' && item.imageUrl}
 				<img class="img" src={item.imageUrl} alt="" draggable="false" />
