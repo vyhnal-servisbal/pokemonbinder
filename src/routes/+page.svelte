@@ -11,7 +11,6 @@
 	import ProfilePrompt from '$lib/components/ProfilePrompt.svelte';
 	import PokeBuddy from '$lib/components/PokeBuddy.svelte';
 	import BuddyConfig from '$lib/components/BuddyConfig.svelte';
-	import CursorTrail from '$lib/components/CursorTrail.svelte';
 	import { store } from '$lib/binderStore.svelte';
 	import { cloud } from '$lib/cloud.svelte';
 	import { buddies } from '$lib/buddyStore.svelte';
@@ -174,8 +173,6 @@
 	<PrintSheet />
 
 	<PokeBuddy />
-
-	<CursorTrail />
 {/if}
 
 <style>

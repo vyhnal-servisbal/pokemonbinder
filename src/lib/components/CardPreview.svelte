@@ -27,7 +27,7 @@
 <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
 <div class="backdrop" transition:fade={{ duration: 180 }} onclick={onClose} role="presentation">
 	<div
-		class="dialog"
+		class="dialog cur-ball"
 		transition:scale={{ duration: 220, start: 0.92 }}
 		onclick={(e) => e.stopPropagation()}
 		role="dialog"

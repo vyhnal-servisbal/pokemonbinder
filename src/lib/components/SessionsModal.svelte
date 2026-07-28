@@ -64,7 +64,7 @@
 					>
 				{/if}
 			</div>
-			<button class="save" onclick={save}>Uložiť</button>
+			<button class="save cur-ball" onclick={save}>Uložiť</button>
 		</div>
 
 		{#if cloud.ready && !cloud.session}

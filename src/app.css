@@ -27,17 +27,26 @@ body {
 	color: #ece9f7;
 }
 
-/* Pokéball cursor. Inline SVG data uri = no request, no lag. Hotspot is the ball
-   centre (14 14); the trailing keyword is the fallback for Safari, which ignores
-   SVG cursors. !important is required: ~35 component rules set their own
-   cursor:pointer/grab and would otherwise win on specificity. */
+/* Custom cursors as inline SVG data uris (no request, no lag).
+   The default is the standard arrow shape, but outline-only, off-white and
+   translucent. The glow is faked by drawing the same path underneath with a
+   wider, fainter stroke -- cursors render SVG filters unreliably.
+   Hotspot is the arrow tip (3 3). Trailing keyword = Safari fallback, it
+   ignores SVG cursors. !important is required: ~35 component rules set their
+   own cursor:pointer/grab and would otherwise win on specificity. */
 :root {
 	--cur:
-		url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Ccircle cx='14' cy='14' r='11' fill='%23fff' stroke='%23111' stroke-width='2'/%3E%3Cpath d='M3 14a11 11 0 0 1 22 0z' fill='%23e0574f'/%3E%3Cpath d='M3 14h22' stroke='%23111' stroke-width='2'/%3E%3Ccircle cx='14' cy='14' r='4' fill='%23fff' stroke='%23111' stroke-width='2'/%3E%3C/svg%3E")
-			14 14,
+		url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cg fill='none' stroke='%23dfe3e8' stroke-linejoin='round'%3E%3Cpath d='M3 3L17 16.5H10.6L13.8 23.2L10.9 24.4L7.7 17.7L3 22Z' stroke-opacity='0.10' stroke-width='5'/%3E%3Cpath d='M3 3L17 16.5H10.6L13.8 23.2L10.9 24.4L7.7 17.7L3 22Z' stroke-opacity='0.22' stroke-width='3'/%3E%3Cpath d='M3 3L17 16.5H10.6L13.8 23.2L10.9 24.4L7.7 17.7L3 22Z' stroke-opacity='0.7' stroke-width='1.4'/%3E%3C/g%3E%3C/svg%3E")
+			3 3,
 		auto;
+	/* interactive: same arrow, brighter with a stronger glow */
 	--cur-hot:
-		url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 28 28'%3E%3Ccircle cx='14' cy='14' r='11' fill='%23fff' stroke='%23111' stroke-width='2'/%3E%3Cpath d='M3 14a11 11 0 0 1 22 0z' fill='%2379e2d5'/%3E%3Cpath d='M3 14h22' stroke='%23111' stroke-width='2'/%3E%3Ccircle cx='14' cy='14' r='4.5' fill='%23fff' stroke='%23111' stroke-width='2'/%3E%3C/svg%3E")
+		url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cg fill='none' stroke='%23eef1f5' stroke-linejoin='round'%3E%3Cpath d='M3 3L17 16.5H10.6L13.8 23.2L10.9 24.4L7.7 17.7L3 22Z' stroke-opacity='0.18' stroke-width='6'/%3E%3Cpath d='M3 3L17 16.5H10.6L13.8 23.2L10.9 24.4L7.7 17.7L3 22Z' stroke-opacity='0.35' stroke-width='3.4'/%3E%3Cpath d='M3 3L17 16.5H10.6L13.8 23.2L10.9 24.4L7.7 17.7L3 22Z' stroke-opacity='0.95' stroke-width='1.6'/%3E%3C/g%3E%3C/svg%3E")
+			3 3,
+		pointer;
+	/* Pokéball: opt-in only, via the .cur-ball class */
+	--cur-ball:
+		url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 28 28'%3E%3Ccircle cx='14' cy='14' r='11' fill='%23fff' stroke='%23111' stroke-width='2'/%3E%3Cpath d='M3 14a11 11 0 0 1 22 0z' fill='%23e0574f'/%3E%3Cpath d='M3 14h22' stroke='%23111' stroke-width='2'/%3E%3Ccircle cx='14' cy='14' r='4.5' fill='%23fff' stroke='%23111' stroke-width='2'/%3E%3C/svg%3E")
 			15 15,
 		pointer;
 }
@@ -47,8 +56,8 @@ body {
 	cursor: var(--cur);
 }
 
-/* anything clickable/draggable gets the aqua ball, so it never falls back
-   to a native hand or grab icon */
+/* anything clickable/draggable keeps the arrow, so it never falls back to a
+   native hand or grab icon */
 button,
 a,
 label,
@@ -68,7 +77,15 @@ button:disabled {
 	cursor: var(--cur) !important;
 }
 
-/* typing needs the I-beam to aim between characters */
+/* opt-in Pokéball: put .cur-ball on an element to give it and its children
+   the ball (card preview, saving) */
+.cur-ball,
+.cur-ball * {
+	cursor: var(--cur-ball) !important;
+}
+
+/* typing needs the I-beam to aim between characters. Deliberately higher
+   specificity than ".cur-ball *", so inputs keep it inside opted-in areas. */
 input[type='text'],
 input[type='number'],
 input[type='search'],
