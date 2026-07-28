@@ -5,6 +5,11 @@ const LS = 'pb_fun';
 
 // same odds as rolling a shiny buddy
 const ODDS = 50;
+// Snorlax is parked for now: the full screen blur + scaled gif was heavy on
+// slower machines. The whole feature stays in place, this just stops it firing.
+const SNORLAX_ENABLED = false;
+// the fake crash is meant to be a once-in-a-blue-moon thing
+const CRASH_ODDS = 10000;
 // gen 1-3; the /pokemon list is ordered by id, so index + 1 IS the pokedex id
 const QUIZ_POOL = 386;
 const SNORLAX_POKES = 10;
@@ -91,8 +96,10 @@ class FunStore {
 		return Math.floor(Math.random() * odds) === 0;
 	}
 
-	// any add/remove/upload in the binder can wake Snorlax
+	// every add/remove/upload counts as an interaction
 	binderAction() {
+		if (!this.winError && this.roll(CRASH_ODDS)) this.winError = true;
+		if (!SNORLAX_ENABLED) return;
 		if (this.snorlax || this.quiz) return;
 		if (!this.roll()) return;
 		this.snorlax = true;
@@ -100,10 +107,8 @@ class FunStore {
 		this.snorlaxWaking = false;
 	}
 
-	// removing a card additionally risks a very old looking crash
 	cardRemoved() {
 		this.binderAction();
-		if (!this.winError && this.roll(10)) this.winError = true;
 	}
 
 	pokeSnorlax() {

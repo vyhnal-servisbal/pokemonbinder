@@ -2,7 +2,6 @@
 	import { onMount, untrack } from 'svelte';
 	import { fade, scale, fly } from 'svelte/transition';
 	import { store } from '$lib/binderStore.svelte';
-	import { buddies } from '$lib/buddyStore.svelte';
 	import { fun, pretty } from '$lib/funStore.svelte';
 
 	interface Drop {
@@ -21,7 +20,6 @@
 
 	// ArrowUp ArrowUp ArrowDown ArrowDown toggles poop mode
 	const CODE = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown'];
-	const QUIZ_EVERY = 15 * 60 * 1000;
 	const ART = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork';
 
 	let poop = $state(false);
@@ -146,12 +144,11 @@
 			setTimeout(() => (drops = drops.filter((x) => x.id !== d.id)), d.dur + d.delay);
 		}, 260);
 
-		const quizTimer = setInterval(() => fun.openQuiz(buddies.all), QUIZ_EVERY);
+		// the quiz is button-only, no timer
 
 		return () => {
 			window.removeEventListener('keydown', key);
 			clearInterval(rain);
-			clearInterval(quizTimer);
 		};
 	});
 </script>
