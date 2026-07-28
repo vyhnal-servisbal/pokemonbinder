@@ -19,24 +19,13 @@ export interface CardSet {
 	name: string;
 }
 
-// TCGdex zmenil formát obrázkov (6/2026): jediná dostupná verzia je {base}/normal/original.png
-function fullImage(base?: string): string | undefined {
-	return base ? `${base}/normal/original.png` : undefined;
-}
-
-// malý webp thumbnail cez weserv resizer (TCGdex už neponúka low/webp verzie)
-export function thumb(url: string | undefined, w = 220): string | undefined {
-	if (!url) return undefined;
-	return `https://images.weserv.nl/?url=${encodeURIComponent(url.replace(/^https?:\/\//, ''))}&w=${w}&output=webp&q=72`;
-}
-
-// card.image drží plné original.png; search grid ho zmenší cez thumb() pri zobrazení
+// search results use a small low-res thumbnail (fast); full res is fetched on add via getCard
 function toCard(c: Brief): PokemonCard {
 	return {
 		id: c.id,
 		name: c.name,
 		number: c.localId,
-		image: fullImage(c.image)
+		image: c.image ? `${c.image}/low.webp` : undefined
 	};
 }
 
@@ -75,7 +64,7 @@ export async function getCard(id: string): Promise<PokemonCard | null> {
 		rarity: c.rarity,
 		set: c.set ? c.set.name : undefined,
 		number: c.localId,
-		image: fullImage(c.image)
+		image: c.image ? `${c.image}/high.png` : undefined
 	};
 }
 

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { fly } from 'svelte/transition';
-	import { searchCards, getCard, listSets, thumb, type CardSet } from '$lib/cardApi';
+	import { searchCards, getCard, listSets, type CardSet } from '$lib/cardApi';
 	import { store } from '$lib/binderStore.svelte';
 	import { cloud } from '$lib/cloud.svelte';
 	import type { PokemonCard } from '$lib/types';
@@ -121,16 +121,7 @@
 				title={card.name}
 			>
 				{#if card.image}
-					<img
-						src={thumb(card.image)}
-						alt={card.name}
-						loading="lazy"
-						onerror={(e) => {
-							// keby weserv vypadol, zober plné original.png priamo
-							const img = e.currentTarget as HTMLImageElement;
-							if (card.image && img.src !== card.image) img.src = card.image;
-						}}
-					/>
+					<img src={card.image} alt={card.name} loading="lazy" />
 				{:else}
 					<span class="noimg">{card.name}</span>
 				{/if}
