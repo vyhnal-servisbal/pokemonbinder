@@ -138,7 +138,7 @@
 					>❓</button
 				>
 				<button class="holo" onclick={() => (achievements = true)} title="Achievements">🏆</button>
-				<a class="holo game" href="/game" title="Unboxing minigame">🎁</a>
+				<a class="holo game" href="/game" title="Unboxing minigame">🎁 Unboxing</a>
 				{#if cloud.enabled}
 					<button class="holo" onclick={() => (sessions = true)} title="Saved states">💾</button>
 				{/if}
@@ -362,12 +362,22 @@
 		cursor: pointer;
 		font-size: 0.85rem;
 	}
-	/* the game link is an <a>, keep it looking like the buttons next to it */
+	/* the game link is an <a>, keep it looking like the buttons next to it
+	   but in pastel aqua so it reads as its own thing */
 	.holo.game {
 		text-decoration: none;
 		display: inline-flex;
 		align-items: center;
+		gap: 0.35rem;
 		line-height: 1;
+		border-color: rgba(var(--accent-rgb), 0.5);
+		background: rgba(var(--accent-rgb), 0.16);
+		color: #d1f6ef;
+		font-weight: 600;
+	}
+	.holo.game:hover {
+		background: rgba(var(--accent-rgb), 0.28);
+		border-color: var(--accent);
 	}
 	.holo.on {
 		background: rgba(var(--accent-rgb), 0.18);
