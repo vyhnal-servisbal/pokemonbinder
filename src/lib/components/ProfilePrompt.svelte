@@ -12,11 +12,11 @@
 
 <div class="backdrop" transition:fade={{ duration: 160 }}>
 	<form class="dialog" transition:scale={{ duration: 200, start: 0.94 }} onsubmit={submit}>
-		<h2>Ako sa voláš?</h2>
-		<p>Bez hesla, len meno na označenie tvojich uložení a binderov.</p>
+		<h2>What is your name?</h2>
+		<p>No password, just a name to label your saves and binders.</p>
 		<!-- svelte-ignore a11y_autofocus -->
-		<input bind:value={name} placeholder="Meno" autofocus />
-		<button type="submit" disabled={!name.trim()}>Pokračovať</button>
+		<input bind:value={name} placeholder="Name" autofocus />
+		<button type="submit" disabled={!name.trim()}>Continue</button>
 	</form>
 </div>
 

@@ -102,10 +102,10 @@
 
 			<div class="tools">
 				{#if item.type === 'image'}
-					<button title="Šírka cez 2 vrecká" onclick={(e) => toggleWide(e, item)}>↔</button>
-					<button title="Výška cez 2 vrecká" onclick={(e) => toggleTall(e, item)}>↕</button>
+					<button title="Span 2 pockets wide" onclick={(e) => toggleWide(e, item)}>↔</button>
+					<button title="Span 2 pockets tall" onclick={(e) => toggleTall(e, item)}>↕</button>
 				{/if}
-				<button class="del" title="Odobrať" onclick={(e) => remove(e, item)}>✕</button>
+				<button class="del" title="Remove" onclick={(e) => remove(e, item)}>✕</button>
 			</div>
 		</div>
 	{/each}

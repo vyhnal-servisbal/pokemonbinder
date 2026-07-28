@@ -31,13 +31,13 @@
 		onclick={(e) => e.stopPropagation()}
 		role="dialog"
 		aria-modal="true"
-		aria-label="Upraviť binder"
+		aria-label="Edit binder"
 		tabindex="-1"
 	>
-		<h2>Upraviť binder</h2>
+		<h2>Edit binder</h2>
 
 		<label class="field">
-			<span>Názov</span>
+			<span>Name</span>
 			<div class="inwrap">
 				<input type="text" bind:value={store.binder.name} />
 				{#if store.binder.name}
@@ -45,15 +45,15 @@
 						type="button"
 						class="x"
 						onclick={() => (store.binder.name = '')}
-						title="Vymazať"
-						aria-label="Vymazať">✕</button
+						title="Clear"
+						aria-label="Clear">✕</button
 					>
 				{/if}
 			</div>
 		</label>
 
 		<label class="field">
-			<span>Počet strán (min {MIN_PAGES})</span>
+			<span>Pages (min {MIN_PAGES})</span>
 			<div class="pages">
 				<button type="button" onclick={() => bump(-1)}>-</button>
 				<input type="number" min={MIN_PAGES} bind:value={pages} onchange={apply} />
@@ -62,27 +62,23 @@
 		</label>
 
 		<label class="field">
-			<span>Farba binderu</span>
+			<span>Binder colour</span>
 			<div class="colors">
 				<input
 					type="color"
 					value={store.binder.inside ?? '#0e0f14'}
 					oninput={(e) => (store.binder.inside = e.currentTarget.value)}
-					aria-label="Farba binderu"
+					aria-label="Binder colour"
 				/>
 				<button
 					type="button"
 					class="creset"
-					onclick={() => (store.binder.inside = undefined)}>Reset na pôvodnú</button
+					onclick={() => (store.binder.inside = undefined)}>Reset to default</button
 				>
 			</div>
 		</label>
 
-		<p class="note">
-			Strany navyše sa pridajú prázdne. Uberať sa dajú len prázdne strany z konca, karty sa nezmažú.
-		</p>
-
-		<button class="close" onclick={onClose} aria-label="Zavrieť">×</button>
+		<button class="close" onclick={onClose} aria-label="Close">×</button>
 	</div>
 </div>
 
@@ -217,12 +213,6 @@
 	}
 	.creset:hover {
 		background: rgba(255, 255, 255, 0.12);
-	}
-	.note {
-		margin: 0;
-		font-size: 0.72rem;
-		opacity: 0.5;
-		line-height: 1.4;
 	}
 	.close {
 		position: absolute;

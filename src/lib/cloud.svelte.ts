@@ -134,7 +134,7 @@ class Cloud {
 				this.addKnown(data.id);
 				await this.switchBinder(data.id);
 			} else {
-				await this.createBinder('Môj binder');
+				await this.createBinder('My binder');
 			}
 		}
 		await this.refreshBinders();
@@ -161,7 +161,7 @@ class Cloud {
 	}
 
 	async createBinder(name: string) {
-		const b = makeEmptyBinder(name || 'Nový binder');
+		const b = makeEmptyBinder(name || 'New binder');
 		const ins = await supabase
 			.from('binders')
 			.insert({ name: b.name, data: b, profile_name: this.profileName || null })
@@ -289,9 +289,9 @@ class Cloud {
 	}
 
 	async saveSession(name: string): Promise<string | null> {
-		if (!this.enabled) return 'Cloud nie je nakonfigurovaný (.env).';
-		if (!this.session) return 'Nepripojené: zapni Anonymous sign-ins v Supabase.';
-		if (!this.currentId) return 'Žiadny aktívny binder.';
+		if (!this.enabled) return 'Cloud is not configured (.env).';
+		if (!this.session) return 'Not connected: enable Anonymous sign-ins in Supabase.';
+		if (!this.currentId) return 'No active binder.';
 		const { error } = await supabase.from('binder_sessions').insert({
 			name: name.trim() || 'Sesia',
 			data: $state.snapshot(store.binder),

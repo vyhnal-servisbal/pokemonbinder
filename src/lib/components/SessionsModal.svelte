@@ -9,7 +9,7 @@
 
 	function fmt(iso: string) {
 		const d = new Date(iso);
-		return d.toLocaleString('sk-SK', {
+		return d.toLocaleString('en-GB', {
 			day: '2-digit',
 			month: '2-digit',
 			hour: '2-digit',
@@ -22,14 +22,14 @@
 		if (err) {
 			msg = err;
 		} else {
-			msg = 'Uložené';
+			msg = 'Saved';
 			name = '';
 		}
 		setTimeout(() => (msg = null), 2600);
 	}
 
 	function restore(id: string) {
-		if (confirm('Obnoviť tento uložený stav? Prepíše aktuálny binder.')) {
+		if (confirm('Restore this saved state? It will overwrite the current binder.')) {
 			cloud.restoreSession(id);
 			onClose();
 		}
@@ -50,47 +50,47 @@
 		onclick={(e) => e.stopPropagation()}
 		role="dialog"
 		aria-modal="true"
-		aria-label="Uložené stavy"
+		aria-label="Saved states"
 		tabindex="-1"
 	>
-		<h2>Uložené stavy</h2>
-		<p class="hint">Ulož si aktuálnu podobu binderu, aby si sa k nej vedel kedykoľvek vrátiť.</p>
+		<h2>Saved states</h2>
+		<p class="hint">Save how your binder looks now, so you can come back to it any time.</p>
 
 		<div class="row">
 			<div class="inwrap">
-				<input type="text" placeholder="Názov (nepovinné)" bind:value={name} />
+				<input type="text" placeholder="Name (optional)" bind:value={name} />
 				{#if name}
-					<button class="x" onclick={() => (name = '')} title="Vymazať" aria-label="Vymazať">✕</button
+					<button class="x" onclick={() => (name = '')} title="Clear" aria-label="Clear">✕</button
 					>
 				{/if}
 			</div>
-			<button class="save cur-ball" onclick={save}>Uložiť</button>
+			<button class="save cur-ball" onclick={save}>Save</button>
 		</div>
 
 		{#if cloud.ready && !cloud.session}
-			<p class="warn">Nepripojené k cloudu. Zapni Anonymous sign-ins v Supabase.</p>
+			<p class="warn">Not connected to the cloud. Enable Anonymous sign-ins in Supabase.</p>
 		{/if}
 		{#if msg}
 			<p class="msg">{msg}</p>
 		{/if}
 
 		{#if cloud.sessions.length === 0}
-			<p class="empty">Zatiaľ žiadne uložené stavy.</p>
+			<p class="empty">No saved states yet.</p>
 		{:else}
 			<ul class="list">
 				{#each cloud.sessions as s (s.id)}
 					<li>
-						<button class="restore" onclick={() => restore(s.id)} title="Obnoviť tento stav">
+						<button class="restore" onclick={() => restore(s.id)} title="Restore this state">
 							<span class="name">{s.name}</span>
 							<span class="time">{s.profile_name ? s.profile_name + ' · ' : ''}{fmt(s.created_at)}</span>
 						</button>
-						<button class="del" onclick={() => cloud.deleteSession(s.id)} title="Zmazať">×</button>
+						<button class="del" onclick={() => cloud.deleteSession(s.id)} title="Delete">×</button>
 					</li>
 				{/each}
 			</ul>
 		{/if}
 
-		<button class="close" onclick={onClose} aria-label="Zavrieť">×</button>
+		<button class="close" onclick={onClose} aria-label="Close">×</button>
 	</div>
 </div>
 

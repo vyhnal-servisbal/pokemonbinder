@@ -27,6 +27,7 @@
 	});
 
 	function poke(b: Buddy, e: MouseEvent) {
+		buddies.poke(b.name); // every 10th poke triggers an evolution
 		const btn = e.currentTarget as HTMLElement;
 		const r = btn.getBoundingClientRect();
 		const cx = r.left + r.width / 2;
@@ -68,9 +69,11 @@
 			{#each row as b (b.name)}
 				<button
 					class="sprite-btn"
+					class:evolving={buddies.evolving === b.name}
+					class:justshiny={buddies.lastShiny === b.name}
 					style="--glow:{b.color}"
 					onclick={(e) => poke(b, e)}
-					title="{b.label} — klikni ma!"
+					title={b.label}
 					aria-label={b.label}
 				>
 					<span class="glow"></span>
@@ -145,6 +148,44 @@
 		}
 		50% {
 			transform: translateY(-4px);
+		}
+	}
+	/* classic evolution look: sprite burns out to a white silhouette and pulses */
+	.evolving .sprite {
+		animation: evolve 0.5s ease-in-out infinite alternate;
+	}
+	@keyframes evolve {
+		0% {
+			filter: brightness(1);
+			transform: scale(1);
+		}
+		100% {
+			filter: brightness(0) invert(1) drop-shadow(0 0 10px #fff);
+			transform: scale(1.22);
+		}
+	}
+	/* rolled shiny on add -> golden ring pulse */
+	.justshiny::after {
+		content: '';
+		position: absolute;
+		inset: -6%;
+		border-radius: 50%;
+		border: 2px solid rgba(240, 200, 90, 0.9);
+		box-shadow: 0 0 18px rgba(240, 200, 90, 0.75);
+		animation: shinyring 1.1s ease-out infinite;
+		pointer-events: none;
+	}
+	@keyframes shinyring {
+		0% {
+			transform: scale(0.7);
+			opacity: 0;
+		}
+		35% {
+			opacity: 1;
+		}
+		100% {
+			transform: scale(1.35);
+			opacity: 0;
 		}
 	}
 	.fx-overlay {

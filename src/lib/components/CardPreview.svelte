@@ -72,7 +72,7 @@
 			<button class="holo-btn" class:on={holoOn} onclick={() => (holoOn = !holoOn)}>✨ Holo</button>
 		</div>
 
-		<button class="close" onclick={onClose} aria-label="Zavrieť">×</button>
+		<button class="close" onclick={onClose} aria-label="Close">×</button>
 	</div>
 </div>
 

@@ -30,16 +30,14 @@
 		onclick={(e) => e.stopPropagation()}
 		role="dialog"
 		aria-modal="true"
-		aria-label="Pokémon kamaráti"
+		aria-label="Poopemons"
 		tabindex="-1"
 	>
-		<h2>Pokémon kamaráti</h2>
-		<p class="hint">Vyber si Pokémonov do pravého rohu. Klik na nich spustí efekt podľa typu.</p>
-
+		<h2>Poopemons</h2>
 		<div class="searchwrap">
-			<input class="search" placeholder="Hľadaj Pokémona (napr. pikachu)..." bind:value={query} />
+			<input class="search" placeholder="search poopemons" bind:value={query} />
 			{#if query}
-				<button class="x" onclick={() => (query = '')} title="Vymazať" aria-label="Vymazať">✕</button>
+				<button class="x" onclick={() => (query = '')} title="Clear" aria-label="Clear">✕</button>
 			{/if}
 		</div>
 
@@ -52,11 +50,11 @@
 				{/each}
 			</div>
 		{:else if query.trim()}
-			<p class="empty">Nič sa nenašlo.</p>
+			<p class="empty">Nothing found.</p>
 		{/if}
 
 		<div class="current">
-			<h3>Tvoji kamaráti ({buddies.list.length})</h3>
+			<h3>smelly poopemons ({buddies.list.length})</h3>
 			{#if buddies.list.length}
 				<div class="chips">
 					{#each buddies.list as b (b.name)}
@@ -69,17 +67,17 @@
 								aria-label="Shiny">✨</button
 							>
 							<span>{b.fx} {b.label}</span>
-							<button class="rm" onclick={() => buddies.remove(b.name)} aria-label="Odobrať">✕</button
+							<button class="rm" onclick={() => buddies.remove(b.name)} aria-label="Remove">✕</button
 							>
 						</span>
 					{/each}
 				</div>
 			{:else}
-				<p class="empty">Zatiaľ žiadni, pridaj si niekoho vyššie.</p>
+				<p class="empty">None yet, add one above.</p>
 			{/if}
 		</div>
 
-		<button class="close" onclick={onClose} aria-label="Zavrieť">×</button>
+		<button class="close" onclick={onClose} aria-label="Close">×</button>
 	</div>
 </div>
 
@@ -114,12 +112,6 @@
 		margin: 0;
 		font-size: 1.2rem;
 		font-weight: 700;
-	}
-	.hint {
-		margin: 0;
-		font-size: 0.82rem;
-		opacity: 0.65;
-		line-height: 1.4;
 	}
 	.searchwrap {
 		position: relative;

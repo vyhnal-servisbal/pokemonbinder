@@ -11,6 +11,7 @@
 	import ProfilePrompt from '$lib/components/ProfilePrompt.svelte';
 	import PokeBuddy from '$lib/components/PokeBuddy.svelte';
 	import BuddyConfig from '$lib/components/BuddyConfig.svelte';
+	import FunFx from '$lib/components/FunFx.svelte';
 	import { store } from '$lib/binderStore.svelte';
 	import { cloud } from '$lib/cloud.svelte';
 	import { buddies } from '$lib/buddyStore.svelte';
@@ -33,11 +34,11 @@
 
 	const saveLabel = $derived(
 		cloud.status === 'saving'
-			? 'Ukladám...'
+			? 'Saving...'
 			: cloud.status === 'saved'
-				? 'Uložené'
+				? 'Saved'
 				: cloud.status === 'error'
-					? 'Chyba'
+					? 'Error'
 					: ''
 	);
 
@@ -46,9 +47,9 @@
 		if (store.view === 'spread') {
 			const a = store.index + 1;
 			const b = Math.min(store.index + 2, n);
-			return a === b ? `Strana ${a} / ${n}` : `Strany ${a}–${b} / ${n}`;
+			return a === b ? `Page ${a} / ${n}` : `Pages ${a}-${b} / ${n}`;
 		}
-		return `Strana ${store.index + 1} / ${n}`;
+		return `Page ${store.index + 1} / ${n}`;
 	});
 </script>
 
@@ -57,7 +58,7 @@
 </svelte:head>
 
 {#if cloud.enabled && !cloud.ready}
-	<div class="center">Načítavam...</div>
+	<div class="center">Loading...</div>
 {:else}
 	<div class="bg-deco" aria-hidden="true">
 		<svg class="ball ball-left" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.4">
@@ -98,7 +99,7 @@
 					class="trim"
 					onclick={() => store.trimEmptyPages()}
 					disabled={!store.lastEmpty}
-					title="Odobrať prázdne strany">🧹</button
+					title="Remove empty pages">🧹</button
 				>
 			</div>
 			<div class="menu">
@@ -108,11 +109,11 @@
 				<button class="holo" class:on={store.holoOn} onclick={() => (store.holoOn = !store.holoOn)}
 					>✨ Holo</button
 				>
-				<button class="holo" onclick={() => (configuring = true)} title="Pokémon kamaráti">🐾</button>
+				<button class="holo" onclick={() => (configuring = true)} title="Poopemons">🐾</button>
 				{#if cloud.enabled}
-					<button class="holo" onclick={() => (sessions = true)} title="Uložené stavy">💾</button>
+					<button class="holo" onclick={() => (sessions = true)} title="Saved states">💾</button>
 				{/if}
-				<button class="edit" onclick={() => (editing = true)}>✏️ Upraviť binder</button>
+				<button class="edit" onclick={() => (editing = true)}>✏️ Edit binder</button>
 				<div class="views">
 					<button class:active={store.view === 'single'} onclick={() => (store.view = 'single')}
 						>Single 3×3</button
@@ -153,12 +154,12 @@
 
 	{#if prompt}
 		<PromptModal
-			title={prompt.mode === 'new' ? 'Nový binder' : 'Tvoje meno'}
-			placeholder={prompt.mode === 'new' ? 'Názov binderu' : 'Meno'}
+			title={prompt.mode === 'new' ? 'New binder' : 'Your name'}
+			placeholder={prompt.mode === 'new' ? 'Binder name' : 'Name'}
 			value={prompt.mode === 'name' ? cloud.profileName : ''}
-			confirmText={prompt.mode === 'new' ? 'Vytvoriť' : 'Uložiť'}
+			confirmText={prompt.mode === 'new' ? 'Create' : 'Save'}
 			onConfirm={(v) => {
-				if (prompt?.mode === 'new') cloud.createBinder(v || 'Nový binder');
+				if (prompt?.mode === 'new') cloud.createBinder(v || 'New binder');
 				else if (v) cloud.setProfile(v);
 				prompt = null;
 			}}
@@ -173,6 +174,8 @@
 	<PrintSheet />
 
 	<PokeBuddy />
+
+	<FunFx />
 {/if}
 
 <style>

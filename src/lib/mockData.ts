@@ -17,7 +17,7 @@ const uid = () => `it_${n++}`;
 
 export const demoBinder: Binder = {
 	id: 'demo',
-	name: 'Náš prvý binder',
+	name: 'Our first binder',
 	sides: [
 		{
 			id: 's1',

@@ -45,7 +45,7 @@
 		<!-- svelte-ignore a11y_autofocus -->
 		<input bind:value={text} {placeholder} autofocus />
 		<div class="actions">
-			<button type="button" class="ghost" onclick={onClose}>Zrušiť</button>
+			<button type="button" class="ghost" onclick={onClose}>Cancel</button>
 			<button type="submit" class="primary">{confirmText}</button>
 		</div>
 	</form>

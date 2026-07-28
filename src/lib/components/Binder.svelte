@@ -6,7 +6,7 @@
 	const left = $derived(store.binder.sides[store.index]);
 	const right = $derived(isSpread ? store.binder.sides[store.index + 1] : undefined);
 
-	// posunie hex o daný offset na kanál (svetlejšie/tmavšie), so zachovaním pôvodného gradientu
+	// shift each channel of a hex colour, keeping the original gradient shape
 	function shade(hex: string, amt: number): string {
 		const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
 		if (!m) return hex;
@@ -21,10 +21,10 @@
 	const spreadStyle = $derived.by(() => {
 		const parts: string[] = [];
 		if (store.binder.inside) {
-			// z vybranej farby zložíme ten istý gradient (svetlejšie hore, tmavšie dole)
+			// rebuild the same gradient from the picked colour (lighter top, darker bottom)
 			const c = store.binder.inside;
 			parts.push(`--b-inside:linear-gradient(160deg, ${shade(c, 15)}, ${shade(c, -15)})`);
-			// plocha pod kartami: tmavší odtieň tej istej farby (karty vyniknú, ostane hĺbka)
+			// page behind the cards: a darker shade, so cards stand out and depth remains
 			parts.push(`--b-page:linear-gradient(160deg, ${shade(c, -30)}, ${shade(c, -60)})`);
 		}
 		if (store.binder.outline) parts.push(`--b-outline:${store.binder.outline}`);
@@ -37,7 +37,7 @@
 		class="nav"
 		onclick={() => store.prev()}
 		disabled={!store.canPrev}
-		aria-label="Predchádzajúca strana">‹</button
+		aria-label="Previous page">‹</button
 	>
 
 	{#key store.index}
@@ -47,7 +47,7 @@
 		</div>
 	{/key}
 
-	<button class="nav" onclick={() => store.nextOrAdd()} aria-label="Ďalšia strana (na konci pridá stranu)"
+	<button class="nav" onclick={() => store.nextOrAdd()} aria-label="Next page (adds one at the end)"
 		>›</button
 	>
 </div>

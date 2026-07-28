@@ -31,9 +31,47 @@ const TYPE_FX: Record<string, { fx: string; color: string }> = {
 };
 const NAME_FX: Record<string, string> = { snorlax: '💤' };
 
+// a new buddy rolls shiny at these odds (the real games use 1/4096, which nobody
+// would ever see here) and evolves after this many pokes
+const SHINY_ODDS = 50;
+const POKES_TO_EVOLVE = 10;
+
+// walk the PokeAPI evolution chain and pick what this species turns into.
+// Branching lines (eevee has 8) pick at random, which is half the fun.
+async function nextEvolution(name: string): Promise<string | null> {
+	try {
+		const s = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${name}`);
+		if (!s.ok) return null;
+		const chainUrl = (await s.json())?.evolution_chain?.url;
+		if (!chainUrl) return null;
+		const c = await fetch(chainUrl);
+		if (!c.ok) return null;
+		const root = (await c.json())?.chain;
+
+		const find = (n: any): any => {
+			if (n?.species?.name === name) return n;
+			for (const e of n?.evolves_to ?? []) {
+				const hit = find(e);
+				if (hit) return hit;
+			}
+			return null;
+		};
+		const node = find(root);
+		const options = node?.evolves_to ?? [];
+		if (!options.length) return null;
+		return options[Math.floor(Math.random() * options.length)].species.name;
+	} catch {
+		return null;
+	}
+}
+
 class BuddyStore {
 	list = $state<Buddy[]>([]);
 	all = $state<string[]>([]); // all pokemon names, for the picker
+	lastShiny = $state<string | null>(null); // just rolled shiny -> celebrate
+	evolving = $state<string | null>(null); // mid evolution -> play the flash
+
+	private pokes: Record<string, number> = {};
 
 	async init() {
 		try {
@@ -68,8 +106,8 @@ class BuddyStore {
 		return this.list.some((b) => b.name === name);
 	}
 
-	async add(name: string) {
-		if (this.has(name)) return;
+	// look up the primary type so the buddy gets a fitting particle + glow
+	private async traits(name: string) {
 		let fx = NAME_FX[name] ?? '✨';
 		let color = '#d8b48a';
 		try {
@@ -85,8 +123,46 @@ class BuddyStore {
 		} catch {
 			/* ignore */
 		}
-		const label = name.charAt(0).toUpperCase() + name.slice(1);
-		this.list = [...this.list, { name, label, fx, color }];
+		return { fx, color, label: name.charAt(0).toUpperCase() + name.slice(1) };
+	}
+
+	async add(name: string) {
+		if (this.has(name)) return;
+		const { fx, color, label } = await this.traits(name);
+		const shiny = Math.floor(Math.random() * SHINY_ODDS) === 0;
+		this.list = [...this.list, { name, label, fx, color, shiny }];
+		this.persist();
+		if (shiny) {
+			this.lastShiny = name;
+			setTimeout(() => {
+				if (this.lastShiny === name) this.lastShiny = null;
+			}, 4500);
+		}
+	}
+
+	// count a poke; every POKES_TO_EVOLVE it tries to evolve the buddy
+	poke(name: string) {
+		this.pokes[name] = (this.pokes[name] ?? 0) + 1;
+		if (this.pokes[name] < POKES_TO_EVOLVE) return;
+		this.pokes[name] = 0;
+		this.evolve(name);
+	}
+
+	async evolve(name: string) {
+		if (this.evolving) return;
+		const next = await nextEvolution(name);
+		if (!next || this.has(next)) return;
+
+		this.evolving = name; // sprite goes white + pulses while this is set
+		const [{ fx, color, label }] = await Promise.all([
+			this.traits(next),
+			new Promise((r) => setTimeout(r, 1500))
+		]);
+		const was = this.list.find((b) => b.name === name);
+		this.list = this.list.map((b) =>
+			b.name === name ? { name: next, label, fx, color, shiny: was?.shiny } : b
+		);
+		this.evolving = null;
 		this.persist();
 	}
 

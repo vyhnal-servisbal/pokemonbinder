@@ -17,15 +17,15 @@
 			copied = true;
 			setTimeout(() => (copied = false), 1800);
 		} catch {
-			prompt('Skopíruj tento link:', link);
+			prompt('Copy this link:', link);
 		}
 	}
 </script>
 
 {#if cloud.enabled}
 	<div class="bar">
-		<button class="profile" onclick={onRename} title="Zmeniť meno">
-			{cloud.profileName || 'Neznámy'}
+		<button class="profile" onclick={onRename} title="Change name">
+			{cloud.profileName || 'Unknown'}
 		</button>
 
 		<select value={cloud.currentId ?? ''} onchange={onSwitch} aria-label="Vyber binder">
@@ -34,8 +34,8 @@
 			{/each}
 		</select>
 
-		<button onclick={onNew}>+ Nový</button>
-		<button class="share" onclick={share}>{copied ? 'Skopírované' : 'Zdieľať'}</button>
+		<button onclick={onNew}>+ New</button>
+		<button class="share" onclick={share}>{copied ? 'Copied' : 'Share'}</button>
 	</div>
 {/if}
 

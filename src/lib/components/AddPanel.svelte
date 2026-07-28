@@ -58,7 +58,7 @@
 
 	async function add(card: PokemonCard) {
 		const full = (await getCard(card.id)) ?? card;
-		say(store.addCard(full) ? `Pridané: ${full.name}` : 'Na tejto strane nie je voľné vrecko');
+		say(store.addCard(full) ? `Added: ${full.name}` : 'No free pocket on this page');
 	}
 
 	async function onFile(e: Event) {
@@ -67,23 +67,23 @@
 		if (!file) return;
 		input.value = '';
 		const url = await cloud.uploadImage(file);
-		say(store.addImage(url) ? 'Obrázok pridaný' : 'Na tejto strane nie je voľné vrecko');
+		say(store.addImage(url) ? 'Image added' : 'No free pocket on this page');
 	}
 </script>
 
 <div class="panel">
-	<h2>Pridať kartu</h2>
+	<h2>Add card</h2>
 
 	<div class="searchbox">
 		<input
 			class="search"
 			type="text"
-			placeholder="Hľadaj podľa názvu..."
+			placeholder="Search by name..."
 			bind:value={query}
 			oninput={onInput}
 		/>
 		{#if query}
-			<button class="clear" onclick={clearQuery} title="Vymazať" aria-label="Vymazať hľadanie">✕</button
+			<button class="clear" onclick={clearQuery} title="Clear" aria-label="Clear search">✕</button
 			>
 		{/if}
 	</div>
@@ -91,9 +91,9 @@
 	<SetPicker {sets} value={setId} onPick={onSetPick} />
 
 	{#if loading}
-		<p class="status">Hľadám...</p>
+		<p class="status">Searching...</p>
 	{:else if (query.trim() || setId) && results.length === 0}
-		<p class="status">Nič sa nenašlo</p>
+		<p class="status">Nothing found</p>
 	{/if}
 
 	<div class="results">
@@ -128,9 +128,9 @@
 	<div class="actions">
 		<label class="btn">
 			<input type="file" accept="image/*" onchange={onFile} hidden />
-			Nahrať obrázok
+			upload poop
 		</label>
-		<button class="btn" onclick={() => window.print()}>Tlačiť / PDF</button>
+		<button class="btn" onclick={() => window.print()}>Peent / PoopDF</button>
 	</div>
 
 	{#if flash}

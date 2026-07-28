@@ -39,12 +39,12 @@
 
 <div class="setbox" bind:this={box}>
 	<button class="trigger" class:picked={!!current} onclick={toggle} title={current?.name ?? ''}>
-		<span class="label">{current ? current.name : 'Všetky sety'}</span>
+		<span class="label">{current ? current.name : 'All sets'}</span>
 		<span class="caret" class:up={open}>▾</span>
 	</button>
 
 	{#if value}
-		<button class="clear-set" onclick={() => pick('')} title="Zrušiť set" aria-label="Zrušiť set"
+		<button class="clear-set" onclick={() => pick('')} title="Clear set" aria-label="Clear set"
 			>✕</button
 		>
 	{/if}
@@ -55,23 +55,23 @@
 				<!-- svelte-ignore a11y_autofocus -->
 				<input
 					class="s"
-					placeholder="Hľadaj set..."
+					placeholder="Search sets..."
 					bind:value={query}
 					autofocus
 					onclick={(e) => e.stopPropagation()}
 				/>
 				{#if query}
-					<button class="x" onclick={() => (query = '')} aria-label="Vymazať">✕</button>
+					<button class="x" onclick={() => (query = '')} aria-label="Clear">✕</button>
 				{/if}
 			</div>
 
 			<div class="list">
-				<button class="opt" class:on={value === ''} onclick={() => pick('')}>Všetky sety</button>
+				<button class="opt" class:on={value === ''} onclick={() => pick('')}>All sets</button>
 				{#each filtered as s (s.id)}
 					<button class="opt" class:on={value === s.id} onclick={() => pick(s.id)}>{s.name}</button>
 				{/each}
 				{#if filtered.length === 0}
-					<p class="none">Nič sa nenašlo.</p>
+					<p class="none">Nothing found.</p>
 				{/if}
 			</div>
 		</div>
