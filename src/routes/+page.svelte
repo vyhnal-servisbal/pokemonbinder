@@ -12,6 +12,8 @@
 	import PokeBuddy from '$lib/components/PokeBuddy.svelte';
 	import BuddyConfig from '$lib/components/BuddyConfig.svelte';
 	import FunFx from '$lib/components/FunFx.svelte';
+	import Achievements from '$lib/components/Achievements.svelte';
+	import { fun } from '$lib/funStore.svelte';
 	import { store } from '$lib/binderStore.svelte';
 	import { cloud } from '$lib/cloud.svelte';
 	import { buddies } from '$lib/buddyStore.svelte';
@@ -19,6 +21,7 @@
 	let editing = $state(false);
 	let configuring = $state(false);
 	let sessions = $state(false);
+	let achievements = $state(false);
 	let prompt = $state<{ mode: 'new' | 'name' } | null>(null);
 
 	onMount(() => {
@@ -110,6 +113,10 @@
 					>✨ Holo</button
 				>
 				<button class="holo" onclick={() => (configuring = true)} title="Poopemons">🐾</button>
+				<button class="holo" onclick={() => fun.openQuiz(buddies.all)} title="Who's that Pokémon?"
+					>❓</button
+				>
+				<button class="holo" onclick={() => (achievements = true)} title="Achievements">🏆</button>
 				{#if cloud.enabled}
 					<button class="holo" onclick={() => (sessions = true)} title="Saved states">💾</button>
 				{/if}
@@ -150,6 +157,10 @@
 
 	{#if sessions}
 		<SessionsModal onClose={() => (sessions = false)} />
+	{/if}
+
+	{#if achievements}
+		<Achievements onClose={() => (achievements = false)} />
 	{/if}
 
 	{#if prompt}

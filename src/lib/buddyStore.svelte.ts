@@ -1,3 +1,5 @@
+import { fun } from './funStore.svelte';
+
 interface Buddy {
 	name: string; // pokemon name = sprite id
 	label: string;
@@ -133,6 +135,7 @@ class BuddyStore {
 		this.list = [...this.list, { name, label, fx, color, shiny }];
 		this.persist();
 		if (shiny) {
+			fun.unlock('shiny');
 			this.lastShiny = name;
 			setTimeout(() => {
 				if (this.lastShiny === name) this.lastShiny = null;
@@ -164,6 +167,7 @@ class BuddyStore {
 		);
 		this.evolving = null;
 		this.persist();
+		fun.unlock('evolve');
 	}
 
 	remove(name: string) {

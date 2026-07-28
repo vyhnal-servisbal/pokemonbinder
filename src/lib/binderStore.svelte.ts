@@ -1,6 +1,7 @@
 import type { Binder, BinderSide, PlacedItem, PokemonCard } from './types';
 import { demoBinder } from './mockData';
 import { getCard } from './cardApi';
+import { fun } from './funStore.svelte';
 
 let seq = 0;
 const newId = () => `it_${Date.now().toString(36)}_${seq++}`;
@@ -149,6 +150,7 @@ class BinderStore {
 					type: 'card',
 					card
 				});
+				fun.binderAction();
 				return true;
 			}
 		}
@@ -169,6 +171,7 @@ class BinderStore {
 					type: 'image',
 					imageUrl: url
 				});
+				fun.binderAction();
 				return true;
 			}
 		}
@@ -177,7 +180,11 @@ class BinderStore {
 
 	removeItem(sideId: string, itemId: string) {
 		const side = this.binder.sides.find((s) => s.id === sideId);
-		if (side) side.items = side.items.filter((it) => it.id !== itemId);
+		if (!side) return;
+		const was = side.items.find((it) => it.id === itemId);
+		side.items = side.items.filter((it) => it.id !== itemId);
+		if (was?.type === 'card') fun.cardRemoved();
+		else if (was) fun.binderAction();
 	}
 
 	openPreview(card: PokemonCard) {
@@ -220,6 +227,7 @@ class BinderStore {
 			card
 		};
 		side.items.push(item);
+		fun.binderAction();
 		// enrich with full-res image + rarity (holo) in the background
 		const full = await getCard(card.id);
 		if (full) {
