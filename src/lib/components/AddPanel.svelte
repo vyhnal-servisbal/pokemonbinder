@@ -199,7 +199,8 @@
 	}
 	.results {
 		display: grid;
-		grid-template-columns: repeat(3, 1fr);
+		/* minmax(0,...) so a long set name can't stretch the column and overflow */
+		grid-template-columns: repeat(3, minmax(0, 1fr));
 		gap: 0.5rem;
 		max-height: 46vh;
 		overflow-y: auto;
@@ -208,6 +209,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.2rem;
+		min-width: 0;
 		padding: 0;
 		border: 0;
 		background: none;

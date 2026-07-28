@@ -61,7 +61,7 @@
 	{#each balls as b (b.id)}
 		<span
 			class="ball"
-			style="left:{b.x}px; top:{b.y}px; width:{b.size}px; height:{b.size}px;
+			style="left:{b.x - b.size / 2}px; top:{b.y - b.size / 2}px; width:{b.size}px; height:{b.size}px;
 			       --dx:{b.dx}px; --fall:{b.fall}px; --rot:{b.rot}deg; --dur:{b.dur}ms"
 		>
 			<svg viewBox="0 0 28 28">
@@ -82,9 +82,10 @@
 		pointer-events: none;
 		overflow: hidden;
 	}
+	/* centred via left/top in the inline style, NOT a % margin
+	   (a % margin resolves against the parent's width, not the ball's) */
 	.ball {
 		position: absolute;
-		margin: -50% 0 0 -50%;
 		will-change: transform, opacity;
 		animation: drop var(--dur) cubic-bezier(0.35, 0, 0.7, 1) forwards;
 	}

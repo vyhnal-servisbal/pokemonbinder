@@ -29,35 +29,51 @@ body {
 
 /* Pokéball cursor. Inline SVG data uri = no request, no lag. Hotspot is the ball
    centre (14 14); the trailing keyword is the fallback for Safari, which ignores
-   SVG cursors. Text inputs deliberately keep the I-beam. */
-body {
-	cursor:
+   SVG cursors. !important is required: ~35 component rules set their own
+   cursor:pointer/grab and would otherwise win on specificity. */
+:root {
+	--cur:
 		url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Ccircle cx='14' cy='14' r='11' fill='%23fff' stroke='%23111' stroke-width='2'/%3E%3Cpath d='M3 14a11 11 0 0 1 22 0z' fill='%23e0574f'/%3E%3Cpath d='M3 14h22' stroke='%23111' stroke-width='2'/%3E%3Ccircle cx='14' cy='14' r='4' fill='%23fff' stroke='%23111' stroke-width='2'/%3E%3C/svg%3E")
 			14 14,
 		auto;
-}
-
-/* clickable things get the aqua ball */
-button,
-a,
-select,
-summary,
-[role='button'] {
-	cursor:
-		url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Ccircle cx='14' cy='14' r='11' fill='%23fff' stroke='%23111' stroke-width='2'/%3E%3Cpath d='M3 14a11 11 0 0 1 22 0z' fill='%2379e2d5'/%3E%3Cpath d='M3 14h22' stroke='%23111' stroke-width='2'/%3E%3Ccircle cx='14' cy='14' r='4' fill='%23fff' stroke='%23111' stroke-width='2'/%3E%3C/svg%3E")
-			14 14,
+	--cur-hot:
+		url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 28 28'%3E%3Ccircle cx='14' cy='14' r='11' fill='%23fff' stroke='%23111' stroke-width='2'/%3E%3Cpath d='M3 14a11 11 0 0 1 22 0z' fill='%2379e2d5'/%3E%3Cpath d='M3 14h22' stroke='%23111' stroke-width='2'/%3E%3Ccircle cx='14' cy='14' r='4.5' fill='%23fff' stroke='%23111' stroke-width='2'/%3E%3C/svg%3E")
+			15 15,
 		pointer;
 }
 
-button:disabled {
-	cursor: default;
+html,
+body {
+	cursor: var(--cur);
 }
 
+/* anything clickable/draggable gets the aqua ball, so it never falls back
+   to a native hand or grab icon */
+button,
+a,
+label,
+select,
+summary,
+[role='button'],
+[draggable='true'],
+.grabbable,
+input[type='color'],
+input[type='file'],
+input[type='checkbox'],
+input[type='radio'] {
+	cursor: var(--cur-hot) !important;
+}
+
+button:disabled {
+	cursor: var(--cur) !important;
+}
+
+/* typing needs the I-beam to aim between characters */
 input[type='text'],
 input[type='number'],
 input[type='search'],
 textarea {
-	cursor: text;
+	cursor: text !important;
 }
 
 button {
