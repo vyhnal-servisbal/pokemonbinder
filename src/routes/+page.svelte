@@ -24,6 +24,21 @@
 	let sessions = $state(false);
 	let achievements = $state(false);
 	let pages = $state(false);
+
+	// trimming needs two clicks, so empty pages never vanish by accident
+	let trimArmed = $state(false);
+	let trimTimer: ReturnType<typeof setTimeout>;
+
+	function trimClick() {
+		clearTimeout(trimTimer);
+		if (trimArmed) {
+			trimArmed = false;
+			store.trimEmptyPages();
+			return;
+		}
+		trimArmed = true;
+		trimTimer = setTimeout(() => (trimArmed = false), 4000);
+	}
 	let prompt = $state<{ mode: 'new' | 'name' } | null>(null);
 
 	onMount(() => {
@@ -102,9 +117,12 @@
 				<span class="count">{pageInfo}</span>
 				<button
 					class="trim"
-					onclick={() => store.trimEmptyPages()}
+					class:armed={trimArmed}
+					onclick={trimClick}
+					onblur={() => (trimArmed = false)}
 					disabled={!store.lastEmpty}
-					title="Remove empty pages">🧹</button
+					title={trimArmed ? 'Click again to remove empty pages' : 'Remove empty pages'}
+					>{trimArmed ? 'Remove empty pages?' : '🧹'}</button
 				>
 				<button class="trim" onclick={() => (pages = true)} title="Rearrange pages">🗂️</button>
 			</div>
@@ -120,6 +138,7 @@
 					>❓</button
 				>
 				<button class="holo" onclick={() => (achievements = true)} title="Achievements">🏆</button>
+				<a class="holo game" href="/game" title="Unboxing minigame">🎁</a>
 				{#if cloud.enabled}
 					<button class="holo" onclick={() => (sessions = true)} title="Saved states">💾</button>
 				{/if}
@@ -299,6 +318,20 @@
 	.trim:hover:not(:disabled) {
 		background: rgba(var(--accent-rgb), 0.22);
 	}
+	/* armed = one more click actually trims */
+	.trim.armed {
+		width: auto;
+		padding: 0 0.75rem;
+		border-color: #f0c85a;
+		background: rgba(240, 200, 90, 0.2);
+		color: #f3d9a8;
+		font-size: 0.78rem;
+		font-weight: 700;
+		white-space: nowrap;
+	}
+	.trim.armed:hover:not(:disabled) {
+		background: rgba(240, 200, 90, 0.32);
+	}
 	.trim:disabled {
 		opacity: 0.3;
 		cursor: default;
@@ -328,6 +361,13 @@
 		color: #d8d2f0;
 		cursor: pointer;
 		font-size: 0.85rem;
+	}
+	/* the game link is an <a>, keep it looking like the buttons next to it */
+	.holo.game {
+		text-decoration: none;
+		display: inline-flex;
+		align-items: center;
+		line-height: 1;
 	}
 	.holo.on {
 		background: rgba(var(--accent-rgb), 0.18);

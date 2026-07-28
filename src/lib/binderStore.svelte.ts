@@ -118,6 +118,16 @@ class BinderStore {
 		[s[a], s[b]] = [s[b], s[a]];
 	}
 
+	// drop a whole page (and whatever is on it); never below the floor
+	deletePage(i: number) {
+		const s = this.binder.sides;
+		if (s.length <= MIN_PAGES || !s[i]) return;
+		s.splice(i, 1);
+		if (this.index + this.step > s.length) {
+			this.index = Math.max(0, s.length - this.step);
+		}
+	}
+
 	// jump to a page; in spread view land on the left half of its spread
 	goToPage(i: number) {
 		const n = this.binder.sides.length;
