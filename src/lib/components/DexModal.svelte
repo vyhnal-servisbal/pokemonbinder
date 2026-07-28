@@ -70,14 +70,14 @@
 						{ length: g.to - g.from + 1 },
 						(_, k) => g.from + k
 					).filter((id) => dex.dex[id]).length}
-					<button class:on={gen === i} onclick={() => (gen = i)} title={g.name}>
-						<b>{g.label}</b>
-						<i>{caught}</i>
+					<button class:on={gen === i} onclick={() => (gen = i)}>
+						<b><span class="rom">{g.label}</span> {g.name}</b>
+						<i>{caught} / {g.to - g.from + 1}</i>
 					</button>
 				{/each}
 			</div>
 
-			<div class="sub">{range.name} · {inGen} / {ids.length} caught</div>
+			<div class="sub">{inGen} of {ids.length} caught in {range.name}</div>
 
 			<div class="grid">
 				{#each ids as id (id)}
@@ -214,6 +214,8 @@
 		align-items: baseline;
 		justify-content: space-between;
 		gap: 1rem;
+		/* keep the counter clear of the close button in the corner */
+		padding-right: 2.6rem;
 	}
 	h2 {
 		margin: 0;
@@ -233,18 +235,29 @@
 	.gens button {
 		display: flex;
 		flex-direction: column;
-		align-items: center;
-		gap: 0.05rem;
-		min-width: 46px;
-		padding: 0.28rem 0.5rem;
+		align-items: flex-start;
+		gap: 0.08rem;
+		padding: 0.32rem 0.7rem;
 		border-radius: 9px;
 		border: 1px solid rgba(255, 255, 255, 0.12);
 		background: rgba(255, 255, 255, 0.04);
 		color: #d8d2f0;
 		cursor: pointer;
+		white-space: nowrap;
 	}
 	.gens button b {
 		font-size: 0.76rem;
+		font-weight: 600;
+	}
+	/* the numeral stays, just dimmed so the region name leads */
+	.rom {
+		display: inline-block;
+		min-width: 1.6em;
+		opacity: 0.5;
+		font-weight: 800;
+	}
+	.gens button.on .rom {
+		opacity: 0.9;
 	}
 	.gens button i {
 		font-style: normal;
