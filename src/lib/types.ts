@@ -5,6 +5,8 @@ export interface PokemonCard {
 	name: string;
 	rarity?: string;
 	set?: string;
+	setId?: string; // TCGdex set id (sv07, base1...), used to build the set logo url
+	series?: string; // TCGdex era id (sv, swsh, xy...), drives the set badge colour
 	number?: string;
 	image?: string; // full image url (ready to render)
 }

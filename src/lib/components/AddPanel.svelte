@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { fly } from 'svelte/transition';
-	import { searchCards, getCard, listSets, type CardSet } from '$lib/cardApi';
+	import { searchCards, getCard, listSets, listSeries, type CardSet } from '$lib/cardApi';
+	import { seriesColor } from '$lib/cardStyle';
+	import SetPicker from './SetPicker.svelte';
 	import { store } from '$lib/binderStore.svelte';
 	import { cloud } from '$lib/cloud.svelte';
 	import type { PokemonCard } from '$lib/types';
@@ -15,6 +17,7 @@
 	let timer: ReturnType<typeof setTimeout>;
 
 	onMount(async () => {
+		listSeries(); // era logos for the card preview, no need to await
 		sets = await listSets();
 	});
 
@@ -43,17 +46,13 @@
 		timer = setTimeout(run, 320);
 	}
 
-	function onSetChange() {
+	function onSetPick(id: string) {
+		setId = id;
 		run();
 	}
 
 	function clearQuery() {
 		query = '';
-		run();
-	}
-
-	function clearSet() {
-		setId = '';
 		run();
 	}
 
@@ -89,17 +88,7 @@
 		{/if}
 	</div>
 
-	<div class="setbox">
-		<select class="setsel" bind:value={setId} onchange={onSetChange} aria-label="Filter podľa setu">
-			<option value="">Všetky sety</option>
-			{#each sets as s (s.id)}
-				<option value={s.id}>{s.name}</option>
-			{/each}
-		</select>
-		{#if setId}
-			<button class="clear-set" onclick={clearSet} title="Zrušiť set" aria-label="Zrušiť set">✕</button>
-		{/if}
-	</div>
+	<SetPicker {sets} value={setId} onPick={onSetPick} />
 
 	{#if loading}
 		<p class="status">Hľadám...</p>
@@ -118,12 +107,17 @@
 				}}
 				ondragend={() => store.endSearchDrag()}
 				onclick={() => add(card)}
-				title={card.name}
+				title={card.set ? `${card.name} · ${card.set}` : card.name}
 			>
-				{#if card.image}
-					<img src={card.image} alt={card.name} loading="lazy" />
-				{:else}
-					<span class="noimg">{card.name}</span>
+				<span class="thumb">
+					{#if card.image}
+						<img src={card.image} alt={card.name} loading="lazy" />
+					{:else}
+						<span class="noimg">{card.name}</span>
+					{/if}
+				</span>
+				{#if card.set}
+					<span class="cap" style="color:{seriesColor(card.series)}">{card.set}</span>
 				{/if}
 			</button>
 		{/each}
@@ -198,42 +192,6 @@
 	.clear:hover {
 		background: rgba(255, 255, 255, 0.22);
 	}
-	.setbox {
-		display: flex;
-		gap: 0.4rem;
-	}
-	.clear-set {
-		flex: none;
-		width: 34px;
-		border-radius: 10px;
-		border: 1px solid rgba(255, 255, 255, 0.14);
-		background: rgba(255, 255, 255, 0.06);
-		color: #fff;
-		cursor: pointer;
-		font-size: 0.72rem;
-	}
-	.clear-set:hover {
-		background: rgba(255, 255, 255, 0.18);
-	}
-	.setsel {
-		flex: 1;
-		min-width: 0;
-		padding: 0.55rem 0.65rem;
-		border-radius: 10px;
-		border: 1px solid rgba(255, 255, 255, 0.14);
-		background: rgba(0, 0, 0, 0.25);
-		color: #fff;
-		font-size: 0.85rem;
-		cursor: pointer;
-	}
-	.setsel:focus {
-		outline: none;
-		border-color: var(--accent);
-	}
-	.setsel option {
-		background: #1a1b22;
-		color: #fff;
-	}
 	.status {
 		margin: 0;
 		font-size: 0.8rem;
@@ -247,12 +205,12 @@
 		overflow-y: auto;
 	}
 	.result {
-		aspect-ratio: 63 / 88;
+		display: flex;
+		flex-direction: column;
+		gap: 0.2rem;
 		padding: 0;
 		border: 0;
-		border-radius: 6px;
-		overflow: hidden;
-		background: rgba(255, 255, 255, 0.05);
+		background: none;
 		cursor: pointer;
 		transition:
 			transform 0.15s ease,
@@ -260,6 +218,15 @@
 	}
 	.result:hover {
 		transform: translateY(-3px) scale(1.03);
+	}
+	.thumb {
+		display: block;
+		aspect-ratio: 63 / 88;
+		border-radius: 6px;
+		overflow: hidden;
+		background: rgba(255, 255, 255, 0.05);
+	}
+	.result:hover .thumb {
 		box-shadow: 0 8px 18px rgba(0, 0, 0, 0.45);
 	}
 	.result img {
@@ -276,6 +243,18 @@
 		padding: 0.3rem;
 		font-size: 0.65rem;
 		text-align: center;
+		color: #fff;
+	}
+	/* set name under each hit, colour = era */
+	.cap {
+		display: block;
+		font-size: 0.58rem;
+		line-height: 1.15;
+		text-align: center;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		opacity: 0.9;
 	}
 	.divider {
 		height: 1px;

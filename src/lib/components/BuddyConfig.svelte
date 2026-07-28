@@ -36,7 +36,12 @@
 		<h2>Pokémon kamaráti</h2>
 		<p class="hint">Vyber si Pokémonov do pravého rohu. Klik na nich spustí efekt podľa typu.</p>
 
-		<input class="search" placeholder="Hľadaj Pokémona (napr. pikachu)..." bind:value={query} />
+		<div class="searchwrap">
+			<input class="search" placeholder="Hľadaj Pokémona (napr. pikachu)..." bind:value={query} />
+			{#if query}
+				<button class="x" onclick={() => (query = '')} title="Vymazať" aria-label="Vymazať">✕</button>
+			{/if}
+		</div>
 
 		{#if results.length}
 			<div class="picker">
@@ -116,8 +121,14 @@
 		opacity: 0.65;
 		line-height: 1.4;
 	}
+	.searchwrap {
+		position: relative;
+		display: flex;
+	}
 	.search {
-		padding: 0.7rem 0.85rem;
+		flex: 1;
+		min-width: 0;
+		padding: 0.7rem 2.4rem 0.7rem 0.85rem;
 		border-radius: 10px;
 		border: 1px solid rgba(255, 255, 255, 0.15);
 		background: rgba(0, 0, 0, 0.25);
@@ -127,6 +138,24 @@
 	.search:focus {
 		outline: none;
 		border-color: var(--accent);
+	}
+	.x {
+		position: absolute;
+		right: 0.5rem;
+		top: 50%;
+		transform: translateY(-50%);
+		width: 24px;
+		height: 24px;
+		border: 0;
+		border-radius: 6px;
+		background: rgba(255, 255, 255, 0.1);
+		color: #fff;
+		cursor: pointer;
+		font-size: 0.7rem;
+		line-height: 1;
+	}
+	.x:hover {
+		background: rgba(255, 255, 255, 0.22);
 	}
 	.picker {
 		display: flex;

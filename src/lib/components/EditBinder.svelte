@@ -38,7 +38,18 @@
 
 		<label class="field">
 			<span>Názov</span>
-			<input type="text" bind:value={store.binder.name} />
+			<div class="inwrap">
+				<input type="text" bind:value={store.binder.name} />
+				{#if store.binder.name}
+					<button
+						type="button"
+						class="x"
+						onclick={() => (store.binder.name = '')}
+						title="Vymazať"
+						aria-label="Vymazať">✕</button
+					>
+				{/if}
+			</div>
 		</label>
 
 		<label class="field">
@@ -112,6 +123,33 @@
 	}
 	.field span {
 		opacity: 0.7;
+	}
+	.inwrap {
+		position: relative;
+		display: flex;
+	}
+	.inwrap input {
+		flex: 1;
+		min-width: 0;
+		padding-right: 2.1rem !important;
+	}
+	.x {
+		position: absolute;
+		right: 0.4rem;
+		top: 50%;
+		transform: translateY(-50%);
+		width: 22px;
+		height: 22px;
+		border: 0;
+		border-radius: 6px;
+		background: rgba(255, 255, 255, 0.1);
+		color: #fff;
+		cursor: pointer;
+		font-size: 0.7rem;
+		line-height: 1;
+	}
+	.x:hover {
+		background: rgba(255, 255, 255, 0.22);
 	}
 	.field input[type='text'] {
 		padding: 0.6rem 0.7rem;

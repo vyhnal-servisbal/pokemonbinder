@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import Binder from '$lib/components/Binder.svelte';
 	import AddPanel from '$lib/components/AddPanel.svelte';
-	import SessionsPanel from '$lib/components/SessionsPanel.svelte';
+	import SessionsModal from '$lib/components/SessionsModal.svelte';
 	import CardPreview from '$lib/components/CardPreview.svelte';
 	import PrintSheet from '$lib/components/PrintSheet.svelte';
 	import EditBinder from '$lib/components/EditBinder.svelte';
@@ -11,13 +11,14 @@
 	import ProfilePrompt from '$lib/components/ProfilePrompt.svelte';
 	import PokeBuddy from '$lib/components/PokeBuddy.svelte';
 	import BuddyConfig from '$lib/components/BuddyConfig.svelte';
-	import CursorGlow from '$lib/components/CursorGlow.svelte';
+	import CursorTrail from '$lib/components/CursorTrail.svelte';
 	import { store } from '$lib/binderStore.svelte';
 	import { cloud } from '$lib/cloud.svelte';
 	import { buddies } from '$lib/buddyStore.svelte';
 
 	let editing = $state(false);
 	let configuring = $state(false);
+	let sessions = $state(false);
 	let prompt = $state<{ mode: 'new' | 'name' } | null>(null);
 
 	onMount(() => {
@@ -109,6 +110,9 @@
 					>✨ Holo</button
 				>
 				<button class="holo" onclick={() => (configuring = true)} title="Pokémon kamaráti">🐾</button>
+				{#if cloud.enabled}
+					<button class="holo" onclick={() => (sessions = true)} title="Uložené stavy">💾</button>
+				{/if}
 				<button class="edit" onclick={() => (editing = true)}>✏️ Upraviť binder</button>
 				<div class="views">
 					<button class:active={store.view === 'single'} onclick={() => (store.view = 'single')}
@@ -129,7 +133,6 @@
 
 		<aside class="sidebar">
 			<AddPanel />
-			<SessionsPanel />
 		</aside>
 	</div>
 
@@ -143,6 +146,10 @@
 
 	{#if configuring}
 		<BuddyConfig onClose={() => (configuring = false)} />
+	{/if}
+
+	{#if sessions}
+		<SessionsModal onClose={() => (sessions = false)} />
 	{/if}
 
 	{#if prompt}
@@ -168,7 +175,7 @@
 
 	<PokeBuddy />
 
-	<CursorGlow />
+	<CursorTrail />
 {/if}
 
 <style>
@@ -250,9 +257,16 @@
 		flex-wrap: wrap;
 	}
 	.count {
-		font-size: 0.8rem;
-		color: rgba(255, 255, 255, 0.6);
+		padding: 0.3rem 0.75rem;
+		border-radius: 999px;
+		border: 1px solid rgba(var(--accent-rgb), 0.45);
+		background: rgba(var(--accent-rgb), 0.14);
+		color: #d1f6ef;
+		font-size: 0.86rem;
+		font-weight: 700;
+		letter-spacing: 0.01em;
 		font-variant-numeric: tabular-nums;
+		white-space: nowrap;
 	}
 	.trim {
 		width: 34px;

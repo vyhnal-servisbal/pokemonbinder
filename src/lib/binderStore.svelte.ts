@@ -6,7 +6,8 @@ let seq = 0;
 const newId = () => `it_${Date.now().toString(36)}_${seq++}`;
 const newSideId = () => `sd_${Date.now().toString(36)}_${seq++}`;
 
-export const MIN_PAGES = 1;
+// 2 = a new binder opens as a full spread (default view is double 3x3)
+export const MIN_PAGES = 2;
 
 // a fresh, empty binder with MIN_PAGES blank pages
 export function makeEmptyBinder(name: string): Binder {
@@ -94,16 +95,16 @@ class BinderStore {
 		this.binder.sides.push({ id: newSideId(), items: [] });
 	}
 
-	// is the last page empty (and not the only page)? -> there is something to trim
+	// is the last page empty (and above the floor)? -> there is something to trim
 	get lastEmpty() {
 		const s = this.binder.sides;
-		return s.length > 1 && s[s.length - 1].items.length === 0;
+		return s.length > MIN_PAGES && s[s.length - 1].items.length === 0;
 	}
 
-	// remove trailing empty pages (never touches pages with cards)
+	// remove trailing empty pages (never touches pages with cards, never below MIN_PAGES)
 	trimEmptyPages() {
 		const s = this.binder.sides;
-		while (s.length > 1 && s[s.length - 1].items.length === 0) s.pop();
+		while (s.length > MIN_PAGES && s[s.length - 1].items.length === 0) s.pop();
 		if (this.index + this.step > s.length) {
 			this.index = Math.max(0, s.length - this.step);
 		}
