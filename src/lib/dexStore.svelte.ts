@@ -121,10 +121,37 @@ class DexStore {
 	opened = $state<number[]>([]); // indexes of the pack already flipped
 	opening = $state(false);
 
+	// entries saved before forms/sizes existed carried { shiny, shadow } booleans
+	// and used '' for the normal size. Bring them up to date instead of losing them.
+	private migrate(raw: Record<string, unknown>): Record<number, Entry> {
+		const out: Record<number, Entry> = {};
+		for (const [k, v] of Object.entries(raw ?? {})) {
+			const e = v as Partial<Entry> & { shiny?: boolean; shadow?: boolean };
+			if (!e || typeof e !== 'object' || !e.best) continue;
+			let forms = Array.isArray(e.forms) ? e.forms.slice() : [];
+			if (!forms.length) {
+				forms = ['normal'];
+				if (e.shiny && e.shadow) forms.push('shinyShadow');
+				if (e.shiny) forms.push('shiny');
+				if (e.shadow) forms.push('shadow');
+			}
+			const sizes = (Array.isArray(e.sizes) ? e.sizes : []).map((s) =>
+				(s as string) === '' ? 'M' : s
+			) as Size[];
+			out[Number(k)] = {
+				count: e.count ?? 1,
+				forms: [...new Set(forms)] as Form[],
+				sizes: [...new Set(sizes.length ? sizes : ['M' as Size])],
+				best: e.best as Catch
+			};
+		}
+		return out;
+	}
+
 	async init() {
 		try {
 			const d = JSON.parse(localStorage.getItem(LS_DEX) ?? '{}');
-			if (d && typeof d === 'object') this.dex = d;
+			if (d && typeof d === 'object') this.dex = this.migrate(d);
 			const b = JSON.parse(localStorage.getItem(LS_BASE) ?? '{}');
 			if (b && typeof b === 'object') this.base = b;
 		} catch {
@@ -153,16 +180,17 @@ class DexStore {
 		return Object.keys(this.dex).length;
 	}
 	get shinyCount() {
-		return Object.values(this.dex).filter((e) => e.forms.some((f) => f.startsWith('shiny'))).length;
+		return Object.values(this.dex).filter((e) => (e.forms ?? []).some((f) => f.startsWith('shiny')))
+			.length;
 	}
 	get shadowCount() {
-		return Object.values(this.dex).filter((e) => e.forms.includes('shadow')).length;
+		return Object.values(this.dex).filter((e) => (e.forms ?? []).includes('shadow')).length;
 	}
 
 	// a species is "complete" once every form and size has been seen
 	isComplete(id: number) {
 		const e = this.dex[id];
-		return !!e && e.forms.length === FORMS.length && e.sizes.length === SIZES.length;
+		return !!e && (e.forms ?? []).length === FORMS.length && (e.sizes ?? []).length === SIZES.length;
 	}
 
 	statLabel(k: string) {
@@ -246,18 +274,21 @@ class DexStore {
 		const form = formOf(c);
 		const cur = this.dex[c.id];
 		if (!cur) {
-			this.dex[c.id] = { count: 1, forms: [form], sizes: [c.size], best: c };
+			this.dex = { ...this.dex, [c.id]: { count: 1, forms: [form], sizes: [c.size], best: c } };
 			return;
 		}
-		cur.count++;
-		if (!cur.forms.includes(form)) cur.forms.push(form);
-		if (!cur.sizes.includes(c.size)) cur.sizes.push(c.size);
+		const forms = (cur.forms ?? []).includes(form) ? cur.forms : [...(cur.forms ?? []), form];
+		const sizes = (cur.sizes ?? []).includes(c.size) ? cur.sizes : [...(cur.sizes ?? []), c.size];
 		// showcase the most interesting catch: shiny beats shadow beats heavier
 		const better =
 			(c.shiny && !cur.best.shiny) ||
 			(c.shiny === cur.best.shiny && c.shadow && !cur.best.shadow) ||
 			(c.shiny === cur.best.shiny && c.shadow === cur.best.shadow && c.weight > cur.best.weight);
-		if (better) cur.best = c;
+		// whole-object reassign so the counters repaint straight away
+		this.dex = {
+			...this.dex,
+			[c.id]: { count: cur.count + 1, forms, sizes, best: better ? c : cur.best }
+		};
 	}
 
 	clearPack() {

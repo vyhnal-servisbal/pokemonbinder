@@ -87,13 +87,13 @@
 						class="slot"
 						class:got={!!e}
 						class:done
-						class:shiny={e?.forms.some((f) => f.startsWith('shiny'))}
-						class:shadow={e?.forms.includes('shadow')}
+						class:shiny={(e?.forms ?? []).some((f) => f.startsWith('shiny'))}
+						class:shadow={(e?.forms ?? []).includes('shadow')}
 						onclick={() => inspect(id)}
 						title={dex.names[id - 1] ? pretty(dex.names[id - 1]) : '#' + id}
 					>
 						<img
-							src={spriteOf(id, !!e?.forms.some((f) => f.startsWith('shiny')))}
+							src={spriteOf(id, (e?.forms ?? []).some((f) => f.startsWith('shiny')))}
 							alt=""
 							loading="lazy"
 							draggable="false"
@@ -106,14 +106,14 @@
 			</div>
 		{:else}
 			{@const oid = open}
-			{@const shinyGot = entry.forms.some((f) => f.startsWith('shiny'))}
+			{@const shinyGot = (entry.forms ?? []).some((f) => f.startsWith('shiny'))}
 			<div class="detail" in:fly={{ x: 24, duration: 200 }}>
 				<button class="backbtn" onclick={back}>‹ Pokédex</button>
 
 				<div class="hero">
 					<img
 						class="art"
-						class:shadow={entry.forms.includes('shadow')}
+						class:shadow={(entry.forms ?? []).includes('shadow')}
 						src={aniOf(entry.best.name, shinyGot)}
 						alt=""
 						onerror={(e) => ((e.currentTarget as HTMLImageElement).src = spriteOf(oid, shinyGot))}
@@ -150,7 +150,7 @@
 					<h4>Forms</h4>
 					<div class="vars">
 						{#each FORMS as f (f.id)}
-							{@const got = entry.forms.includes(f.id)}
+							{@const got = (entry.forms ?? []).includes(f.id)}
 							<span class="var {f.id}" class:got>
 								<b>{got ? '✓' : '✗'}</b>
 								{f.label}
@@ -163,7 +163,7 @@
 					<h4>Sizes</h4>
 					<div class="vars">
 						{#each SIZES as s (s)}
-							{@const got = entry.sizes.includes(s)}
+							{@const got = (entry.sizes ?? []).includes(s)}
 							<span class="var size" class:got>
 								<b>{got ? '✓' : '✗'}</b>
 								{s === 'M' ? 'Normal' : s}
