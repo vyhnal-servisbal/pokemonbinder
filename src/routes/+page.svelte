@@ -13,6 +13,7 @@
 	import BuddyConfig from '$lib/components/BuddyConfig.svelte';
 	import FunFx from '$lib/components/FunFx.svelte';
 	import Achievements from '$lib/components/Achievements.svelte';
+	import PagesModal from '$lib/components/PagesModal.svelte';
 	import { fun } from '$lib/funStore.svelte';
 	import { store } from '$lib/binderStore.svelte';
 	import { cloud } from '$lib/cloud.svelte';
@@ -22,6 +23,7 @@
 	let configuring = $state(false);
 	let sessions = $state(false);
 	let achievements = $state(false);
+	let pages = $state(false);
 	let prompt = $state<{ mode: 'new' | 'name' } | null>(null);
 
 	onMount(() => {
@@ -104,6 +106,7 @@
 					disabled={!store.lastEmpty}
 					title="Remove empty pages">🧹</button
 				>
+				<button class="trim" onclick={() => (pages = true)} title="Rearrange pages">🗂️</button>
 			</div>
 			<div class="menu">
 				{#if cloud.enabled}
@@ -161,6 +164,10 @@
 
 	{#if achievements}
 		<Achievements onClose={() => (achievements = false)} />
+	{/if}
+
+	{#if pages}
+		<PagesModal onClose={() => (pages = false)} />
 	{/if}
 
 	{#if prompt}

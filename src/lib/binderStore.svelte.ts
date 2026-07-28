@@ -111,6 +111,20 @@ class BinderStore {
 		}
 	}
 
+	// swap two whole pages; contents travel with them
+	swapPages(a: number, b: number) {
+		const s = this.binder.sides;
+		if (a === b || !s[a] || !s[b]) return;
+		[s[a], s[b]] = [s[b], s[a]];
+	}
+
+	// jump to a page; in spread view land on the left half of its spread
+	goToPage(i: number) {
+		const n = this.binder.sides.length;
+		if (i < 0 || i >= n) return;
+		this.index = this.view === 'spread' ? i - (i % 2) : i;
+	}
+
 	goToEnd() {
 		const n = this.binder.sides.length;
 		const last = this.view === 'spread' ? (n % 2 === 0 ? n - 2 : n - 1) : n - 1;
