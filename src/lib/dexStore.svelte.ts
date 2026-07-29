@@ -305,6 +305,20 @@ class DexStore {
 		return this.idsWhere(kind).length;
 	}
 
+	// the caught alternate form of a given kind, so a filtered grid can show
+	// that form's sprite instead of the plain species one
+	caughtAltOfKind(id: number, kind: string): AltForm | null {
+		const got = this.dex[id]?.alts ?? [];
+		for (const a of this.alts[id] ?? []) {
+			if (got.includes(a.key) && formKind(a.key)?.kind === kind) return a;
+		}
+		return null;
+	}
+
+	altByKey(id: number, key: string): AltForm | null {
+		return (this.alts[id] ?? []).find((a) => a.key === key) ?? null;
+	}
+
 	// a species is complete once every finish, size and alternate form is seen
 	isComplete(id: number) {
 		const e = this.dex[id];

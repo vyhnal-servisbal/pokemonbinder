@@ -47,9 +47,16 @@
 	const inGen = $derived(ids.filter((id) => dex.dex[id]).length);
 	const entry = $derived(open !== null ? dex.dex[open] : undefined);
 
+	// which form/finish the detail sprite is currently showing
+	let viewForm = $state(''); // '' = base species
+	let viewShiny = $state(false);
+
 	async function inspect(id: number) {
 		if (!dex.dex[id]) return;
 		open = id;
+		// land on the form that matches the collection you came from
+		viewForm = mode ? (dex.caughtAltOfKind(id, mode)?.key ?? '') : '';
+		viewShiny = false;
 		info = dex.base[id] ?? null;
 		info = await dex.loadBase(id);
 	}
@@ -123,6 +130,7 @@
 					{@const e = dex.dex[id]}
 					{@const f = e?.forms ?? []}
 					{@const shinyGot = f.some((x) => x.startsWith('shiny'))}
+					{@const alt = mode ? dex.caughtAltOfKind(id, mode) : null}
 					<button
 						class="slot"
 						class:got={!!e}
@@ -134,7 +142,12 @@
 						onclick={() => inspect(id)}
 						title={dex.names[id - 1] ? pretty(dex.names[id - 1]) : '#' + id}
 					>
-						<img src={spriteOf(id, shinyGot)} alt="" loading="lazy" draggable="false" />
+						<img
+							src={spriteOf(alt ? alt.spriteId : id, shinyGot)}
+							alt=""
+							loading="lazy"
+							draggable="false"
+						/>
 						<span class="nm">{dex.names[id - 1] ? pretty(dex.names[id - 1]) : '???'}</span>
 						<span class="id">#{String(id).padStart(4, '0')}</span>
 						{#if e && e.count > 1}<span class="cnt">×{e.count}</span>{/if}
@@ -150,18 +163,26 @@
 			{@const f = entry.forms ?? []}
 			{@const shinyGot = f.some((x) => x.startsWith('shiny'))}
 			{@const pool = dex.alts[oid] ?? []}
+			{@const cur = viewForm ? dex.altByKey(oid, viewForm) : null}
+			{@const curName = cur ? cur.name : (dex.names[oid - 1] ?? entry.best.name)}
+			{@const curSprite = cur ? cur.spriteId : oid}
+			{@const curGot = viewForm ? (entry.alts ?? []).includes(viewForm) : true}
 			<div class="detail" in:fly={{ x: 24, duration: 200 }}>
 				<button class="backbtn" onclick={back}>‹ Pokédex</button>
 
 				<div class="hero">
-					<img
-						class="art"
-						class:shadow={f.includes('shadow') || f.includes('shinyShadow')}
-						src={aniOf(entry.best.name, shinyGot)}
-						alt=""
-						onerror={(e) =>
-							((e.currentTarget as HTMLImageElement).src = spriteOf(entry.best.spriteId ?? oid, shinyGot))}
-					/>
+					<div class="artwrap">
+						<img
+							class="art"
+							class:shadow={f.includes('shadow') || f.includes('shinyShadow')}
+							class:locked={!curGot}
+							src={aniOf(curName, viewShiny)}
+							alt=""
+							onerror={(e) =>
+								((e.currentTarget as HTMLImageElement).src = spriteOf(curSprite, viewShiny))}
+						/>
+						{#if !curGot}<span class="lockmsg">Not caught yet</span>{/if}
+					</div>
 					<div class="herotxt">
 						<h3>{pretty(dex.names[oid - 1] ?? entry.best.name)}</h3>
 						<span class="eid">#{String(oid).padStart(4, '0')}</span>
@@ -176,6 +197,31 @@
 							Caught <b>{entry.count}×</b><br />
 							Best: {entry.best.height} m · {entry.best.weight} kg
 						</p>
+
+						<!-- flip the sprite between every form this species has -->
+						<div class="switch">
+							<button class="sw" class:on={viewForm === ''} onclick={() => (viewForm = '')}
+								>Normal</button
+							>
+							{#each pool as a (a.key)}
+								{@const k = formKind(a.key)}
+								{@const got = (entry.alts ?? []).includes(a.key)}
+								<button
+									class="sw"
+									class:on={viewForm === a.key}
+									class:missing={!got}
+									style:--c={k?.color}
+									onclick={() => (viewForm = a.key)}>{k?.label ?? pretty(a.key)}</button
+								>
+							{/each}
+							<button
+								class="sw shinytog"
+								class:on={viewShiny}
+								class:missing={!shinyGot}
+								onclick={() => (viewShiny = !viewShiny)}
+								title="Show the shiny sprite">✨ Shiny</button
+							>
+						</div>
 					</div>
 				</div>
 
@@ -509,11 +555,66 @@
 		gap: 1.4rem;
 		flex-wrap: wrap;
 	}
+	.artwrap {
+		position: relative;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
 	.art {
 		width: 150px;
 		height: 150px;
 		object-fit: contain;
 		image-rendering: pixelated;
+	}
+	/* previewing a form you have not caught: silhouette, like the grid */
+	.art.locked {
+		filter: brightness(0);
+		opacity: 0.4;
+	}
+	.lockmsg {
+		position: absolute;
+		bottom: -0.2rem;
+		left: 50%;
+		transform: translateX(-50%);
+		padding: 0.14rem 0.5rem;
+		border-radius: 999px;
+		background: rgba(0, 0, 0, 0.7);
+		border: 1px solid rgba(255, 255, 255, 0.16);
+		font-size: 0.62rem;
+		white-space: nowrap;
+		opacity: 0.8;
+	}
+	.switch {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.3rem;
+		margin-top: 0.6rem;
+	}
+	.sw {
+		padding: 0.28rem 0.65rem;
+		border-radius: 8px;
+		border: 1px solid rgba(255, 255, 255, 0.14);
+		background: rgba(255, 255, 255, 0.04);
+		color: #d8d2f0;
+		font-size: 0.74rem;
+		cursor: pointer;
+	}
+	.sw:hover {
+		border-color: color-mix(in srgb, var(--c, #79e2d5) 70%, transparent);
+	}
+	.sw.on {
+		border-color: var(--c, var(--accent));
+		background: color-mix(in srgb, var(--c, #79e2d5) 22%, transparent);
+		color: var(--c, #d1f6ef);
+	}
+	/* still clickable, so you can see what you are hunting for */
+	.sw.missing {
+		opacity: 0.45;
+	}
+	.shinytog {
+		--c: #f0c85a;
+		margin-left: auto;
 	}
 	.art.shadow {
 		filter: brightness(0.75) saturate(0.6) drop-shadow(0 0 10px rgba(170, 110, 220, 0.85));
