@@ -5,7 +5,8 @@ const LS_DEX = 'pb_dex';
 const LS_BASE = 'pb_dexbase';
 
 export const DEX_MAX = 1025; // national dex; ids above 10000 are alternate forms
-export const API_MAX = 1400; // enough to cover every form entry
+// PokeAPI is at 1351 entries; keep real headroom so new forms never drop off
+export const API_MAX = 2500;
 export const PACK_SIZE = 5;
 
 const SHINY_ODDS = 50;

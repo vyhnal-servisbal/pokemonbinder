@@ -54,12 +54,13 @@
 		setTimeout(() => (particles = particles.filter((p) => !ids.has(p.id))), 1700);
 	}
 
+	// compared against the url, not a flag: the <img> is reused when you toggle
+	// shiny, and a flag would survive and block the fallback
 	function onErr(e: Event, b: Buddy) {
 		const img = e.currentTarget as HTMLImageElement;
-		if (!img.dataset.fb) {
-			img.dataset.fb = '1';
-			img.src = `https://play.pokemonshowdown.com/sprites/gen5${b.shiny ? '-shiny' : ''}/${b.name}.png`;
-		}
+		const fb = `https://play.pokemonshowdown.com/sprites/gen5${b.shiny ? '-shiny' : ''}/${b.name}.png`;
+		if (img.src === fb) return;
+		img.src = fb;
 	}
 </script>
 

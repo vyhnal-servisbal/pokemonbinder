@@ -84,6 +84,26 @@
 		info = null;
 	}
 
+	// 11 forms (starter Pikachu/Eevee, the Koraidon/Miraidon builds, zygarde-mega)
+	// have no sprite at all, so fall back to the plain species.
+	// Compared against the url rather than a flag on the element, because Svelte
+	// reuses these <img> nodes and a flag would stick around from the last render.
+	function onImgError(e: Event, id: number, shiny: boolean) {
+		const img = e.currentTarget as HTMLImageElement;
+		const fb = spriteOf(id, shiny);
+		if (img.src === fb) return;
+		img.src = fb;
+	}
+
+	// hero steps down twice: animated form -> static form -> plain species
+	function onHeroError(e: Event, formId: number, speciesId: number, shiny: boolean) {
+		const img = e.currentTarget as HTMLImageElement;
+		const a = spriteOf(formId, shiny);
+		const b = spriteOf(speciesId, shiny);
+		if (img.src === b) return;
+		img.src = img.src === a ? b : a;
+	}
+
 	function onKey(e: KeyboardEvent) {
 		if (e.key !== 'Escape') return;
 		if (open !== null) back();
@@ -166,6 +186,7 @@
 							alt=""
 							loading="lazy"
 							draggable="false"
+							onerror={(ev) => onImgError(ev, id, shinyGot)}
 						/>
 						<span class="nm">{dex.names[id - 1] ? pretty(dex.names[id - 1]) : '???'}</span>
 						<span class="id">#{String(id).padStart(4, '0')}</span>
@@ -199,8 +220,7 @@
 							class:locked={!curGot}
 							src={aniOf(curName, viewShiny)}
 							alt=""
-							onerror={(e) =>
-								((e.currentTarget as HTMLImageElement).src = spriteOf(curSprite, viewShiny))}
+							onerror={(e) => onHeroError(e, curSprite, oid, viewShiny)}
 						/>
 						{#if !curGot}<span class="lockmsg">Not caught yet</span>{/if}
 					</div>
@@ -280,6 +300,7 @@
 									class:locked={!got}
 									alt=""
 									loading="lazy"
+									onerror={(ev) => onImgError(ev, oid, t.shiny)}
 								/>
 								<i>{t.label}</i>
 							</span>
@@ -300,6 +321,7 @@
 										style:transform="scale({SIZE_SCALE[s]})"
 										alt=""
 										loading="lazy"
+										onerror={(ev) => onImgError(ev, oid, false)}
 									/>
 								</span>
 								<i>{s === 'M' ? 'Normal' : s}</i>
@@ -316,7 +338,13 @@
 								{@const got = (entry.alts ?? []).includes(a.key)}
 								{@const k = formKind(a.key)}
 								<span class="tile" class:got style:--c={k?.color}>
-									<img src={spriteOf(a.spriteId, false)} class:locked={!got} alt="" loading="lazy" />
+									<img
+										src={spriteOf(a.spriteId, false)}
+										class:locked={!got}
+										alt=""
+										loading="lazy"
+										onerror={(ev) => onImgError(ev, oid, false)}
+									/>
 									<i>{k?.label ?? pretty(a.key)}</i>
 								</span>
 							{/each}

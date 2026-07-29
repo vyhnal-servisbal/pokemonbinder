@@ -46,33 +46,32 @@
 		showDex = true;
 	}
 
-	// a few forms (the Koraidon/Miraidon build modes) have no sprite anywhere, so
-	// step down: animated form -> static form -> plain species
+	// 11 forms have no sprite anywhere, so step down:
+	// animated form -> static form -> plain species.
+	// Compared against the url, not a flag on the element: Svelte reuses these
+	// <img> nodes between packs and a flag would survive into the next one.
 	function fallback(e: Event, c: Catch) {
 		const img = e.currentTarget as HTMLImageElement;
-		const step = Number(img.dataset.fb ?? 0);
-		if (step === 0) {
-			img.dataset.fb = '1';
-			img.src = spriteOf(c.spriteId ?? c.id, c.shiny);
-		} else if (step === 1) {
-			img.dataset.fb = '2';
-			img.src = spriteOf(c.id, c.shiny);
-		}
+		const a = spriteOf(c.spriteId ?? c.id, c.shiny);
+		const b = spriteOf(c.id, c.shiny);
+		if (img.src === b) return;
+		img.src = img.src === a ? b : a;
 	}
 
-	// object-fit already fits each sprite to the box, so what still looks uneven is
-	// aspect ratio: a wide fish reads small, a tall deer reads narrow. Even out the
-	// drawn AREA instead. After contain, area = w*h*(box/max(w,h))^2, so the
-	// correction reduces to max(w,h)/sqrt(w*h) and never depends on the box.
+	// object-fit blows every canvas up to fill the box, which is why a 47px
+	// Fletchling ended up as big as a 115px Onix. The sprite canvas is actually a
+	// decent proxy for how big the Pokemon is, so scale relative to the largest
+	// canvas instead of filling. Floor keeps the tiny ones readable.
+	const SPRITE_REF = 130; // roughly the biggest canvas Showdown ships
+	const SPRITE_MIN = 0.42;
 	const SIZE_FACTOR: Record<string, number> = { XXS: 0.8, XS: 0.9, M: 1, XL: 1.1, XXL: 1.22 };
 	let scales = $state<Record<number, number>>({});
 
 	function measure(e: Event, i: number, c: Catch) {
 		const img = e.currentTarget as HTMLImageElement;
-		const w = img.naturalWidth || 96;
-		const h = img.naturalHeight || 96;
-		const norm = Math.min(1.15, Math.max(0.85, (0.86 * Math.max(w, h)) / Math.sqrt(w * h)));
-		scales = { ...scales, [i]: norm * (SIZE_FACTOR[c.size] ?? 1) };
+		const side = Math.max(img.naturalWidth || 96, img.naturalHeight || 96);
+		const rel = Math.min(1, Math.max(SPRITE_MIN, side / SPRITE_REF));
+		scales = { ...scales, [i]: rel * (SIZE_FACTOR[c.size] ?? 1) };
 	}
 
 	// a fresh pack starts from unmeasured
@@ -468,7 +467,7 @@
 	}
 	.card {
 		position: relative;
-		width: clamp(172px, min(22vw, 38dvh), 284px);
+		width: clamp(160px, min(20.5vw, 35dvh), 262px);
 		aspect-ratio: 3 / 4;
 		padding: 0;
 		border-radius: 16px;
@@ -551,8 +550,8 @@
 		justify-content: center;
 	}
 	.face img {
-		width: clamp(96px, 11.5vw, 150px);
-		height: clamp(96px, 11.5vw, 150px);
+		width: clamp(104px, 12.5vw, 162px);
+		height: clamp(104px, 12.5vw, 162px);
 		object-fit: contain;
 		image-rendering: pixelated;
 		transform-origin: center bottom;
