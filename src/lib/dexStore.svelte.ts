@@ -3,6 +3,7 @@
 
 const LS_DEX = 'pb_dex';
 const LS_BASE = 'pb_dexbase';
+const LS_META = 'pb_dexmeta';
 
 export const DEX_MAX = 1025; // national dex; ids above 10000 are alternate forms
 // PokeAPI is at 1351 entries; keep real headroom so new forms never drop off
@@ -210,6 +211,72 @@ export function rarityGlow(c: { id: number; form: string }): { color: string; ra
 	return best;
 }
 
+// Pity thresholds, sized off a 200k pack simulation of the real odds:
+// shiny lands every ~10 packs, mega ~15, gmax ~40, shiny shadow ~122.
+// Each threshold is roughly 2.5x the average wait, so it only ever rescues
+// a genuinely unlucky streak.
+export const PITY_AT: Record<string, number> = {
+	shiny: 25,
+	mega: 35,
+	gmax: 90,
+	shinyShadow: 200
+};
+export const PITY_KINDS = ['shiny', 'mega', 'gmax', 'shinyShadow'] as const;
+export type PityKind = (typeof PITY_KINDS)[number];
+
+// what a duplicate is worth, and what the shop charges
+export const SHOP: Record<string, { cost: number; label: string; desc: string; color: string }> = {
+	shiny: {
+		cost: 150,
+		label: 'Shiny pack',
+		desc: 'Guarantees a shiny you do not have yet',
+		color: '#f0c85a'
+	},
+	mega: {
+		cost: 120,
+		label: 'Mega pack',
+		desc: 'Guarantees a Mega form you are missing',
+		color: '#ff6b6b'
+	},
+	gmax: {
+		cost: 200,
+		label: 'Gigantamax pack',
+		desc: 'Guarantees a Gigantamax you are missing',
+		color: '#ff7ad9'
+	}
+};
+
+const SCORE_KIND: Record<string, number> = {
+	gmax: 30,
+	mega: 25,
+	primal: 30,
+	terastal: 20,
+	crowned: 15,
+	origin: 15,
+	therian: 12,
+	totem: 10,
+	alola: 8,
+	galar: 8,
+	hisui: 8,
+	paldea: 8,
+	variant: 5
+};
+
+// single number for a catch, used by the pack battle and for duplicate dust
+export function rarityScore(c: Catch): number {
+	let s = 1;
+	if (c.shiny) s += 50;
+	if (c.shadow) s += 10;
+	if (c.shiny && c.shadow) s += 60;
+	if (MYTHICAL.has(c.id)) s += 50;
+	else if (LEGENDARY.has(c.id)) s += 30;
+	const k = c.form ? formKind(c.form) : null;
+	if (k) s += SCORE_KIND[k.kind] ?? 5;
+	if (c.size === 'XXL' || c.size === 'XXS') s += 6;
+	else if (c.size === 'XL' || c.size === 'XS') s += 2;
+	return s;
+}
+
 // one roll drives both height and weight, the way GO derives its size tags
 function rollSize(): { mult: number; size: Size } {
 	const r = (Math.random() + Math.random() + Math.random()) / 3;
@@ -231,6 +298,8 @@ class DexStore {
 	opened = $state<number[]>([]);
 	opening = $state(false);
 	specials = $state<number[]>([]); // pack indexes that pulled a shiny shadow
+	pity = $state<Record<string, number>>({ shiny: 0, mega: 0, gmax: 0, shinyShadow: 0 });
+	dust = $state(0); // earned from duplicates, spent in the shop
 
 	// older saves had { shiny, shadow } booleans and '' for the normal size
 	private migrate(raw: Record<string, unknown>): Record<number, Entry> {
@@ -265,6 +334,9 @@ class DexStore {
 			if (d && typeof d === 'object') this.dex = this.migrate(d);
 			const b = JSON.parse(localStorage.getItem(LS_BASE) ?? '{}');
 			if (b && typeof b === 'object') this.base = b;
+			const m = JSON.parse(localStorage.getItem(LS_META) ?? '{}');
+			if (typeof m?.dust === 'number') this.dust = m.dust;
+			if (m?.pity && typeof m.pity === 'object') this.pity = { ...this.pity, ...m.pity };
 		} catch {
 			/* ignore */
 		}
@@ -324,6 +396,7 @@ class DexStore {
 		try {
 			localStorage.setItem(LS_DEX, JSON.stringify(this.dex));
 			localStorage.setItem(LS_BASE, JSON.stringify(this.base));
+			localStorage.setItem(LS_META, JSON.stringify({ dust: this.dust, pity: this.pity }));
 		} catch {
 			/* ignore */
 		}
@@ -445,6 +518,94 @@ class DexStore {
 		return b;
 	}
 
+	// build a pack without touching the dex; the battle screen uses this too
+	async buildPack(force?: { kind: string; missingOnly: boolean }): Promise<Catch[]> {
+		const ids = Array.from(
+			{ length: PACK_SIZE },
+			() => 1 + Math.floor(Math.random() * Math.min(DEX_MAX, this.names.length))
+		);
+		// a guaranteed slot swaps in a species that can actually deliver it
+		let forcedSlot = -1;
+		let forcedAlt: AltForm | null = null;
+		let forcedShiny = false;
+		if (force) {
+			forcedSlot = Math.floor(Math.random() * PACK_SIZE);
+			if (force.kind === 'shiny' || force.kind === 'shinyShadow') {
+				forcedShiny = true;
+				const pool = this.speciesMissingShiny();
+				if (force.missingOnly && pool.length) ids[forcedSlot] = pool[Math.floor(Math.random() * pool.length)];
+			} else {
+				const pool = this.speciesWithKind(force.kind, force.missingOnly);
+				const pick = pool.length
+					? pool[Math.floor(Math.random() * pool.length)]
+					: this.speciesWithKind(force.kind, false)[0];
+				if (pick) {
+					ids[forcedSlot] = pick.id;
+					forcedAlt = pick.alt;
+				}
+			}
+		}
+
+		const bases = await Promise.all(ids.map((id) => this.loadBase(id)));
+		return ids.map((id, k) => {
+			const { mult, size } = rollSize();
+			const pool = this.alts[id] ?? [];
+			let alt: AltForm | null =
+				pool.length && Math.random() < ALT_FORM_CHANCE
+					? pool[Math.floor(Math.random() * pool.length)]
+					: null;
+			let shiny = Math.floor(Math.random() * SHINY_ODDS) === 0;
+			let shadow = Math.floor(Math.random() * SHADOW_ODDS) === 0;
+			if (k === forcedSlot) {
+				if (forcedAlt) alt = forcedAlt;
+				if (forcedShiny) shiny = true;
+				if (force?.kind === 'shinyShadow') shadow = true;
+			}
+			return {
+				id,
+				spriteId: alt ? alt.spriteId : id,
+				name: alt ? alt.name : this.names[id - 1],
+				form: alt ? alt.key : '',
+				shiny,
+				shadow,
+				size,
+				height: +(bases[k].height * mult).toFixed(2),
+				weight: +(bases[k].weight * mult * mult).toFixed(1)
+			};
+		});
+	}
+
+	// species that still owe you this kind of alternate form
+	speciesWithKind(kind: string, missingOnly: boolean): { id: number; alt: AltForm }[] {
+		const out: { id: number; alt: AltForm }[] = [];
+		for (const [k, list] of Object.entries(this.alts)) {
+			const id = Number(k);
+			for (const a of list) {
+				if (formKind(a.key)?.kind !== kind) continue;
+				if (missingOnly && (this.dex[id]?.alts ?? []).includes(a.key)) continue;
+				out.push({ id, alt: a });
+			}
+		}
+		return out;
+	}
+
+	speciesMissingShiny(): number[] {
+		const out: number[] = [];
+		for (let id = 1; id <= Math.min(DEX_MAX, this.names.length); id++) {
+			const f = this.dex[id]?.forms ?? [];
+			if (!f.some((x) => x.startsWith('shiny'))) out.push(id);
+		}
+		return out;
+	}
+
+	// which pity is due, rarest first so one pack never burns two of them
+	private duePity(): PityKind | null {
+		for (const k of ['shinyShadow', 'gmax', 'mega', 'shiny'] as PityKind[]) {
+			if ((this.pity[k] ?? 0) >= PITY_AT[k]) return k;
+		}
+		return null;
+	}
+
 	async openPack() {
 		if (this.opening || !this.names.length) return;
 		this.opening = true;
@@ -452,31 +613,38 @@ class DexStore {
 		this.opened = [];
 		this.specials = [];
 
-		const ids = Array.from(
-			{ length: PACK_SIZE },
-			() => 1 + Math.floor(Math.random() * Math.min(DEX_MAX, this.names.length))
-		);
-		const bases = await Promise.all(ids.map((id) => this.loadBase(id)));
-
-		this.pack = ids.map((id, k) => {
-			const { mult, size } = rollSize();
-			const pool = this.alts[id] ?? [];
-			const alt = pool.length && Math.random() < ALT_FORM_CHANCE
-				? pool[Math.floor(Math.random() * pool.length)]
-				: null;
-			return {
-				id,
-				spriteId: alt ? alt.spriteId : id,
-				name: alt ? alt.name : this.names[id - 1],
-				form: alt ? alt.key : '',
-				shiny: Math.floor(Math.random() * SHINY_ODDS) === 0,
-				shadow: Math.floor(Math.random() * SHADOW_ODDS) === 0,
-				size,
-				height: +(bases[k].height * mult).toFixed(2),
-				weight: +(bases[k].weight * mult * mult).toFixed(1)
-			};
-		});
+		const due = this.duePity();
+		this.pack = await this.buildPack(due ? { kind: due, missingOnly: false } : undefined);
+		this.bumpPity();
 		this.opening = false;
+	}
+
+	// a shop pack always delivers something you are missing
+	async openShopPack(kind: string) {
+		const price = SHOP[kind]?.cost ?? 0;
+		if (this.opening || this.dust < price || !this.names.length) return;
+		this.opening = true;
+		this.dust -= price;
+		this.pack = [];
+		this.opened = [];
+		this.specials = [];
+		this.pack = await this.buildPack({ kind, missingOnly: true });
+		this.bumpPity();
+		this.persist();
+		this.opening = false;
+	}
+
+	// counters move on whole packs, and reset the moment the pack delivers
+	private bumpPity() {
+		const got = {
+			shiny: this.pack.some((c) => c.shiny),
+			shinyShadow: this.pack.some((c) => c.shiny && c.shadow),
+			mega: this.pack.some((c) => formKind(c.form)?.kind === 'mega'),
+			gmax: this.pack.some((c) => formKind(c.form)?.kind === 'gmax')
+		};
+		const next = { ...this.pity };
+		for (const k of PITY_KINDS) next[k] = got[k] ? 0 : (next[k] ?? 0) + 1;
+		this.pity = next;
 	}
 
 	flip(i: number) {
@@ -526,6 +694,8 @@ class DexStore {
 		const sizes = (cur.sizes ?? []).includes(c.size) ? cur.sizes : [...(cur.sizes ?? []), c.size];
 		const alts =
 			c.form && !(cur.alts ?? []).includes(c.form) ? [...(cur.alts ?? []), c.form] : (cur.alts ?? []);
+		// a duplicate is not wasted: it pays dust, scaled by how good it was
+		this.dust += Math.max(1, Math.round(rarityScore(c) / 6));
 		const better =
 			(c.shiny && !cur.best.shiny) ||
 			(c.shiny === cur.best.shiny && c.shadow && !cur.best.shadow) ||
@@ -545,6 +715,8 @@ class DexStore {
 
 	reset() {
 		this.dex = {};
+		this.dust = 0;
+		this.pity = { shiny: 0, mega: 0, gmax: 0, shinyShadow: 0 };
 		this.clearPack();
 		this.persist();
 	}

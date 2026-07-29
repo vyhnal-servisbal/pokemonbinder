@@ -14,6 +14,9 @@
 		typeColor,
 		isLegendary,
 		isMythical,
+		PITY_AT,
+		PITY_KINDS,
+		SHOP,
 		type Catch
 	} from '$lib/dexStore.svelte';
 
@@ -116,6 +119,7 @@
 	<header class="topbar">
 		<div class="inner">
 		<a class="back" href="/">‹ Binder</a>
+		<a class="back battle" href="/battle">⚔ Pack battle</a>
 		<h1>Unboxing</h1>
 
 		<button
@@ -157,6 +161,33 @@
 			<span class="lbl">{dex.opening ? 'Opening...' : 'Tap to open a pack'}</span>
 			<span class="hint">5 Pokémon · shiny, shadow, size and alternate forms are rolled</span>
 		</button>
+
+		<div class="pity">
+			{#each PITY_KINDS as k (k)}
+				{@const n = dex.pity[k] ?? 0}
+				{@const max = PITY_AT[k]}
+				<div class="pbar" class:close={n >= max - 3} title="Guaranteed after {max} packs without one">
+					<span class="plabel">{k === 'shinyShadow' ? 'shiny shadow' : k}</span>
+					<span class="ptrack"><i style:width="{Math.min(100, (n / max) * 100)}%"></i></span>
+					<span class="pnum">{n} / {max}</span>
+				</div>
+			{/each}
+		</div>
+
+		<div class="shop">
+			<span class="dust"><b>{dex.dust}</b> dust</span>
+			{#each Object.entries(SHOP) as [k, item] (k)}
+				<button
+					class="buy"
+					style:--c={item.color}
+					disabled={dex.dust < item.cost || dex.opening}
+					title={item.desc}
+					onclick={() => dex.openShopPack(k)}
+				>
+					{item.label} <i>{item.cost}</i>
+				</button>
+			{/each}
+		</div>
 	{:else}
 		<p class="prompt">{dex.allFlipped ? 'Nice haul.' : 'Tap the cards to reveal them.'}</p>
 
@@ -282,6 +313,14 @@
 	}
 	.back:hover {
 		background: rgba(var(--accent-rgb), 0.24);
+	}
+	.back.battle {
+		border-color: rgba(240, 200, 90, 0.45);
+		background: rgba(240, 200, 90, 0.12);
+		color: #f0c85a;
+	}
+	.back.battle:hover {
+		background: rgba(240, 200, 90, 0.24);
 	}
 	h1 {
 		margin: 0;
@@ -458,6 +497,94 @@
 	.hint {
 		font-size: 0.75rem;
 		opacity: 0.5;
+	}
+	/* ---- pity + shop ---- */
+	.pity {
+		display: flex;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+		justify-content: center;
+	}
+	.pbar {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		padding: 0.28rem 0.6rem;
+		border-radius: 999px;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		background: rgba(255, 255, 255, 0.03);
+		font-size: 0.68rem;
+	}
+	/* nearly there -> nudge it so you notice */
+	.pbar.close {
+		border-color: rgba(240, 200, 90, 0.6);
+		background: rgba(240, 200, 90, 0.12);
+		color: #f0c85a;
+	}
+	.plabel {
+		text-transform: capitalize;
+		opacity: 0.7;
+	}
+	.ptrack {
+		display: block;
+		width: 56px;
+		height: 5px;
+		border-radius: 999px;
+		background: rgba(255, 255, 255, 0.1);
+		overflow: hidden;
+	}
+	.ptrack i {
+		display: block;
+		height: 100%;
+		border-radius: 999px;
+		background: linear-gradient(90deg, var(--accent), #f0c85a);
+		transition: width 0.3s ease;
+	}
+	.pnum {
+		font-variant-numeric: tabular-nums;
+		opacity: 0.6;
+	}
+	.shop {
+		display: flex;
+		gap: 0.45rem;
+		flex-wrap: wrap;
+		justify-content: center;
+		align-items: center;
+	}
+	.dust {
+		padding: 0.32rem 0.75rem;
+		border-radius: 999px;
+		border: 1px solid rgba(var(--accent-rgb), 0.45);
+		background: rgba(var(--accent-rgb), 0.14);
+		color: #d1f6ef;
+		font-size: 0.76rem;
+	}
+	.dust b {
+		font-weight: 800;
+		font-variant-numeric: tabular-nums;
+	}
+	.buy {
+		padding: 0.32rem 0.8rem;
+		border-radius: 999px;
+		border: 1px solid color-mix(in srgb, var(--c) 45%, transparent);
+		background: color-mix(in srgb, var(--c) 14%, transparent);
+		color: var(--c);
+		font-size: 0.76rem;
+		font-weight: 700;
+		cursor: pointer;
+		white-space: nowrap;
+	}
+	.buy i {
+		font-style: normal;
+		opacity: 0.7;
+		font-variant-numeric: tabular-nums;
+	}
+	.buy:hover:not(:disabled) {
+		background: color-mix(in srgb, var(--c) 26%, transparent);
+	}
+	.buy:disabled {
+		opacity: 0.35;
+		cursor: default;
 	}
 	.prompt {
 		margin: 0;
