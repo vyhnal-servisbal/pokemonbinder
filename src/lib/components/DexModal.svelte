@@ -5,7 +5,6 @@
 		dex,
 		GENS,
 		DEX_MAX,
-		FORMS,
 		SIZES,
 		spriteOf,
 		aniOf,
@@ -13,8 +12,20 @@
 		isLegendary,
 		isMythical,
 		formKind,
+		typeColor,
 		type Base
 	} from '$lib/dexStore.svelte';
+
+	// finish tiles are built from the two real sprite sets; shadow is a filter
+	const FINISH_TILES = [
+		{ id: 'normal', label: 'Normal', shiny: false, dark: false },
+		{ id: 'shiny', label: 'Shiny', shiny: true, dark: false },
+		{ id: 'shadow', label: 'Shadow', shiny: false, dark: true },
+		{ id: 'shinyShadow', label: 'Shiny Shadow', shiny: true, dark: true }
+	] as const;
+
+	// the same sprite drawn at different scales reads as a size chart
+	const SIZE_SCALE: Record<string, number> = { XXS: 0.5, XS: 0.7, M: 0.86, XL: 1, XXL: 1.18 };
 
 	let { onClose, filter = '' }: { onClose: () => void; filter?: string } = $props();
 
@@ -167,10 +178,12 @@
 			{@const curName = cur ? cur.name : (dex.names[oid - 1] ?? entry.best.name)}
 			{@const curSprite = cur ? cur.spriteId : oid}
 			{@const curGot = viewForm ? (entry.alts ?? []).includes(viewForm) : true}
-			<div class="detail" in:fly={{ x: 24, duration: 200 }}>
+			<div class="detailwrap" in:fly={{ x: 24, duration: 200 }}>
 				<button class="backbtn" onclick={back}>‹ Pokédex</button>
 
-				<div class="hero">
+				<div class="cols">
+					<div class="detail">
+						<div class="hero">
 					<div class="artwrap">
 						<img
 							class="art"
@@ -190,7 +203,9 @@
 						<div class="badges">
 							{#if isLegendary(oid)}<span class="badge" style:--c="#ffd166">Legendary</span>{/if}
 							{#if isMythical(oid)}<span class="badge" style:--c="#ff9ec7">Mythical</span>{/if}
-							{#each info?.types ?? [] as t (t)}<span class="badge type">{t}</span>{/each}
+							{#each info?.types ?? [] as t (t)}
+								<span class="badge" style:--c={typeColor(t)}>{t}</span>
+							{/each}
 						</div>
 
 						<p class="meta">
@@ -238,24 +253,49 @@
 					</div>
 				{/if}
 
+				{#if dex.isComplete(oid)}
+					<p class="complete">★ Entry complete</p>
+				{/if}
+					</div>
+
+					<!-- collectibles live in their own column, so the panel stays wide not tall -->
+					<div class="side">
 				<div class="block">
 					<h4>Finish</h4>
-					<div class="vars">
-						{#each FORMS as x (x.id)}
-							{@const got = f.includes(x.id)}
-							<span class="var {x.id}" class:got><b>{got ? '✓' : '✗'}</b> {x.label}</span>
+					<div class="tiles">
+						{#each FINISH_TILES as t (t.id)}
+							{@const got = f.includes(t.id)}
+							<span class="tile" class:got style:--c={got ? '#79e2d5' : undefined}>
+								<img
+									src={spriteOf(curSprite, t.shiny)}
+									class:dark={t.dark}
+									class:locked={!got}
+									alt=""
+									loading="lazy"
+								/>
+								<i>{t.label}</i>
+							</span>
 						{/each}
 					</div>
 				</div>
 
 				<div class="block">
 					<h4>Sizes</h4>
-					<div class="vars">
+					<div class="tiles">
 						{#each SIZES as s (s)}
 							{@const got = (entry.sizes ?? []).includes(s)}
-							<span class="var size" class:got
-								><b>{got ? '✓' : '✗'}</b> {s === 'M' ? 'Normal' : s}</span
-							>
+							<span class="tile" class:got>
+								<span class="sizebox">
+									<img
+										src={spriteOf(curSprite, false)}
+										class:locked={!got}
+										style:transform="scale({SIZE_SCALE[s]})"
+										alt=""
+										loading="lazy"
+									/>
+								</span>
+								<i>{s === 'M' ? 'Normal' : s}</i>
+							</span>
 						{/each}
 					</div>
 				</div>
@@ -263,22 +303,20 @@
 				{#if pool.length}
 					<div class="block">
 						<h4>Alternate forms</h4>
-						<div class="vars">
+						<div class="tiles">
 							{#each pool as a (a.key)}
 								{@const got = (entry.alts ?? []).includes(a.key)}
 								{@const k = formKind(a.key)}
-								<span class="var" class:got style:--c={k?.color}>
-									<b>{got ? '✓' : '✗'}</b>
-									{k?.label ?? pretty(a.key)}
+								<span class="tile" class:got style:--c={k?.color}>
+									<img src={spriteOf(a.spriteId, false)} class:locked={!got} alt="" loading="lazy" />
+									<i>{k?.label ?? pretty(a.key)}</i>
 								</span>
 							{/each}
 						</div>
 					</div>
 				{/if}
-
-				{#if dex.isComplete(oid)}
-					<p class="complete">★ Entry complete</p>
-				{/if}
+					</div>
+				</div>
 			</div>
 		{/if}
 
@@ -530,7 +568,7 @@
 	}
 
 	/* ---- detail ---- */
-	.detail {
+	.detailwrap {
 		flex: 1;
 		min-height: 0;
 		display: flex;
@@ -538,6 +576,25 @@
 		gap: 0.85rem;
 		overflow-y: auto;
 		padding-right: 0.2rem;
+	}
+	/* wide, not tall: stats on the left, everything collectible on the right */
+	.cols {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+		gap: 1.6rem;
+		align-items: start;
+	}
+	@media (max-width: 860px) {
+		.cols {
+			grid-template-columns: minmax(0, 1fr);
+		}
+	}
+	.detail,
+	.side {
+		display: flex;
+		flex-direction: column;
+		gap: 0.9rem;
+		min-width: 0;
 	}
 	.backbtn {
 		align-self: flex-start;
@@ -644,9 +701,6 @@
 		background: color-mix(in srgb, var(--c, #ffffff) 18%, transparent);
 		border: 1px solid color-mix(in srgb, var(--c, #ffffff) 45%, transparent);
 	}
-	.badge.type {
-		--c: #9aa3ad;
-	}
 	.meta {
 		margin: 0;
 		font-size: 0.84rem;
@@ -690,37 +744,64 @@
 		min-width: 26px;
 		text-align: right;
 	}
-	.vars {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.35rem;
+	.tiles {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+		gap: 0.4rem;
 	}
-	.var {
-		display: inline-flex;
+	.tile {
+		display: flex;
+		flex-direction: column;
 		align-items: center;
-		gap: 0.35rem;
-		padding: 0.32rem 0.7rem;
-		border-radius: 999px;
-		border: 1px solid rgba(255, 255, 255, 0.1);
-		background: rgba(255, 255, 255, 0.03);
-		font-size: 0.78rem;
+		gap: 0.2rem;
+		padding: 0.4rem 0.25rem 0.3rem;
+		border-radius: 10px;
+		border: 1px solid rgba(255, 255, 255, 0.09);
+		background: rgba(255, 255, 255, 0.02);
+	}
+	.tile.got {
+		border-color: color-mix(in srgb, var(--c, #79e2d5) 55%, transparent);
+		background: color-mix(in srgb, var(--c, #79e2d5) 12%, transparent);
+	}
+	.tile img {
+		width: 56px;
+		height: 56px;
+		object-fit: contain;
+		image-rendering: pixelated;
+	}
+	/* not caught -> plain silhouette, same trick as the grid */
+	.tile img.locked {
+		filter: brightness(0);
+		opacity: 0.35;
+	}
+	.tile img.dark {
+		filter: brightness(0.62) saturate(0.5) drop-shadow(0 0 6px rgba(170, 110, 220, 0.9));
+	}
+	.tile img.dark.locked {
+		filter: brightness(0);
+	}
+	/* size chart: one sprite, drawn at the scale the tag means */
+	.sizebox {
+		display: flex;
+		align-items: flex-end;
+		justify-content: center;
+		width: 56px;
+		height: 56px;
+	}
+	.sizebox img {
+		transform-origin: bottom center;
+	}
+	.tile i {
+		font-style: normal;
+		font-size: 0.64rem;
+		font-weight: 700;
+		text-align: center;
+		line-height: 1.15;
 		opacity: 0.5;
 	}
-	.var b {
-		font-size: 0.72rem;
-	}
-	.var.got {
+	.tile.got i {
 		opacity: 1;
-		border-color: color-mix(in srgb, var(--c, #79e2d5) 55%, transparent);
-		background: color-mix(in srgb, var(--c, #79e2d5) 16%, transparent);
 		color: var(--c, #d1f6ef);
-	}
-	.var.shiny.got,
-	.var.shinyShadow.got {
-		--c: #f0c85a;
-	}
-	.var.shadow.got {
-		--c: #b47ae0;
 	}
 	.complete {
 		margin: 0;

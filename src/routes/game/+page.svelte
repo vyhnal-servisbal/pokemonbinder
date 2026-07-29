@@ -80,8 +80,9 @@
 
 <svelte:head><title>Unboxing · Pokémon Binder</title></svelte:head>
 
-<header class="topbar">
-	<div class="inner">
+<div class="page">
+	<header class="topbar">
+		<div class="inner">
 		<a class="back" href="/">‹ Binder</a>
 		<h1>Unboxing</h1>
 
@@ -178,6 +179,7 @@
 		{/if}
 	{/if}
 </main>
+</div>
 
 <!-- shiny shadow flourish: short, centred, never blocks a click -->
 {#if dex.lastSpecial}
@@ -265,17 +267,26 @@
 		font-weight: 700;
 	}
 
+	/* the page owns the viewport: header takes what it needs, main gets the rest.
+	   No guessing the header height, so no stray scrollbar when the chips wrap. */
+	.page {
+		height: 100dvh;
+		display: grid;
+		grid-template-rows: auto minmax(0, 1fr);
+		overflow: hidden;
+	}
 	.wrap {
+		width: 100%;
 		max-width: 1500px;
 		margin: 0 auto;
-		padding: 1rem 1.6rem 2rem;
+		padding: 1rem 1.6rem;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 1rem;
-		/* keep a whole pack on screen without scrolling */
-		min-height: calc(100dvh - 56px);
 		justify-content: center;
+		gap: 1rem;
+		min-height: 0;
+		overflow-y: auto; /* only scrolls if a pack really cannot fit */
 	}
 
 	/* ---- spacebar toggle ---- */
