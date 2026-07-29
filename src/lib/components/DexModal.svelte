@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { fade, scale, fly } from 'svelte/transition';
 	import {
 		dex,
@@ -9,23 +10,43 @@
 		spriteOf,
 		aniOf,
 		pretty,
+		isLegendary,
+		isMythical,
+		formKind,
 		type Base
 	} from '$lib/dexStore.svelte';
 
-	let { onClose }: { onClose: () => void } = $props();
+	let { onClose, filter = '' }: { onClose: () => void; filter?: string } = $props();
 
 	let gen = $state(0);
-	let open = $state<number | null>(null); // species being inspected
+	// the modal is re-created on every open, so seeding from the prop once is intended
+	let mode = $state(untrack(() => filter)); // '' = browse by generation
+	let open = $state<number | null>(null);
 	let info = $state<Base | null>(null);
+
+	const COLLECTIONS = [
+		{ id: 'shiny', label: 'Shiny', color: '#f0c85a' },
+		{ id: 'shadow', label: 'Shadow', color: '#b47ae0' },
+		{ id: 'shinyShadow', label: 'Shiny Shadow', color: '#ff8ae0' },
+		{ id: 'mega', label: 'Mega', color: '#ff6b6b' },
+		{ id: 'gmax', label: 'Gigantamax', color: '#ff7ad9' },
+		{ id: 'alola', label: 'Alolan', color: '#4fd1c5' },
+		{ id: 'galar', label: 'Galarian', color: '#8ab4f8' },
+		{ id: 'hisui', label: 'Hisuian', color: '#c39b6b' },
+		{ id: 'paldea', label: 'Paldean', color: '#a3d977' },
+		{ id: 'legendary', label: 'Legendary', color: '#ffd166' },
+		{ id: 'mythical', label: 'Mythical', color: '#ff9ec7' }
+	];
 
 	const range = $derived(GENS[gen]);
 	const ids = $derived(
-		Array.from({ length: range.to - range.from + 1 }, (_, k) => range.from + k)
+		mode
+			? dex.idsWhere(mode)
+			: Array.from({ length: range.to - range.from + 1 }, (_, k) => range.from + k)
 	);
 	const inGen = $derived(ids.filter((id) => dex.dex[id]).length);
 	const entry = $derived(open !== null ? dex.dex[open] : undefined);
 
-	// stats load lazily, only for the species you actually open
 	async function inspect(id: number) {
 		if (!dex.dex[id]) return;
 		open = id;
@@ -64,68 +85,93 @@
 				<span class="total">{dex.caughtCount} / {DEX_MAX}</span>
 			</div>
 
-			<div class="gens">
-				{#each GENS as g, i (g.label)}
-					{@const caught = Array.from(
-						{ length: g.to - g.from + 1 },
-						(_, k) => g.from + k
-					).filter((id) => dex.dex[id]).length}
-					<button class:on={gen === i} onclick={() => (gen = i)}>
-						<b><span class="rom">{g.label}</span> {g.name}</b>
-						<i>{caught} / {g.to - g.from + 1}</i>
-					</button>
+			<div class="tabs">
+				<button class="tab" class:on={mode === ''} onclick={() => (mode = '')}>Generations</button>
+				{#each COLLECTIONS as c (c.id)}
+					{@const n = dex.countOf(c.id)}
+					{#if n > 0 || mode === c.id}
+						<button
+							class="tab col"
+							class:on={mode === c.id}
+							style:--c={c.color}
+							onclick={() => (mode = c.id)}>{c.label} <i>{n}</i></button
+						>
+					{/if}
 				{/each}
 			</div>
 
-			<div class="sub">{inGen} of {ids.length} caught in {range.name}</div>
+			{#if mode === ''}
+				<div class="gens">
+					{#each GENS as g, i (g.label)}
+						{@const caught = Array.from(
+							{ length: g.to - g.from + 1 },
+							(_, k) => g.from + k
+						).filter((id) => dex.dex[id]).length}
+						<button class:on={gen === i} onclick={() => (gen = i)}>
+							<b><span class="rom">{g.label}</span> {g.name}</b>
+							<i>{caught} / {g.to - g.from + 1}</i>
+						</button>
+					{/each}
+				</div>
+				<div class="sub">{inGen} of {ids.length} caught in {range.name}</div>
+			{:else}
+				<div class="sub">{ids.length} in this collection</div>
+			{/if}
 
 			<div class="grid">
 				{#each ids as id (id)}
 					{@const e = dex.dex[id]}
-					{@const done = dex.isComplete(id)}
+					{@const f = e?.forms ?? []}
+					{@const shinyGot = f.some((x) => x.startsWith('shiny'))}
 					<button
 						class="slot"
 						class:got={!!e}
-						class:done
-						class:shiny={(e?.forms ?? []).some((f) => f.startsWith('shiny'))}
-						class:shadow={(e?.forms ?? []).includes('shadow')}
+						class:done={dex.isComplete(id)}
+						class:shiny={shinyGot}
+						class:shadow={f.includes('shadow') || f.includes('shinyShadow')}
+						class:legend={isLegendary(id)}
+						class:myth={isMythical(id)}
 						onclick={() => inspect(id)}
 						title={dex.names[id - 1] ? pretty(dex.names[id - 1]) : '#' + id}
 					>
-						<img
-							src={spriteOf(id, (e?.forms ?? []).some((f) => f.startsWith('shiny')))}
-							alt=""
-							loading="lazy"
-							draggable="false"
-						/>
+						<img src={spriteOf(id, shinyGot)} alt="" loading="lazy" draggable="false" />
+						<span class="nm">{dex.names[id - 1] ? pretty(dex.names[id - 1]) : '???'}</span>
 						<span class="id">#{String(id).padStart(4, '0')}</span>
 						{#if e && e.count > 1}<span class="cnt">×{e.count}</span>{/if}
-						{#if done}<span class="star">★</span>{/if}
+						{#if dex.isComplete(id)}<span class="star">★</span>{/if}
 					</button>
 				{/each}
+				{#if !ids.length}
+					<p class="none">Nothing here yet.</p>
+				{/if}
 			</div>
 		{:else}
 			{@const oid = open}
-			{@const shinyGot = (entry.forms ?? []).some((f) => f.startsWith('shiny'))}
+			{@const f = entry.forms ?? []}
+			{@const shinyGot = f.some((x) => x.startsWith('shiny'))}
+			{@const pool = dex.alts[oid] ?? []}
 			<div class="detail" in:fly={{ x: 24, duration: 200 }}>
 				<button class="backbtn" onclick={back}>‹ Pokédex</button>
 
 				<div class="hero">
 					<img
 						class="art"
-						class:shadow={(entry.forms ?? []).includes('shadow')}
+						class:shadow={f.includes('shadow') || f.includes('shinyShadow')}
 						src={aniOf(entry.best.name, shinyGot)}
 						alt=""
-						onerror={(e) => ((e.currentTarget as HTMLImageElement).src = spriteOf(oid, shinyGot))}
+						onerror={(e) =>
+							((e.currentTarget as HTMLImageElement).src = spriteOf(entry.best.spriteId ?? oid, shinyGot))}
 					/>
 					<div class="herotxt">
-						<h3>{pretty(entry.best.name)}</h3>
+						<h3>{pretty(dex.names[oid - 1] ?? entry.best.name)}</h3>
 						<span class="eid">#{String(oid).padStart(4, '0')}</span>
-						{#if info?.types.length}
-							<div class="types">
-								{#each info.types as t (t)}<span class="type {t}">{t}</span>{/each}
-							</div>
-						{/if}
+
+						<div class="badges">
+							{#if isLegendary(oid)}<span class="badge" style:--c="#ffd166">Legendary</span>{/if}
+							{#if isMythical(oid)}<span class="badge" style:--c="#ff9ec7">Mythical</span>{/if}
+							{#each info?.types ?? [] as t (t)}<span class="badge type">{t}</span>{/each}
+						</div>
+
 						<p class="meta">
 							Caught <b>{entry.count}×</b><br />
 							Best: {entry.best.height} m · {entry.best.weight} kg
@@ -147,14 +193,11 @@
 				{/if}
 
 				<div class="block">
-					<h4>Forms</h4>
+					<h4>Finish</h4>
 					<div class="vars">
-						{#each FORMS as f (f.id)}
-							{@const got = (entry.forms ?? []).includes(f.id)}
-							<span class="var {f.id}" class:got>
-								<b>{got ? '✓' : '✗'}</b>
-								{f.label}
-							</span>
+						{#each FORMS as x (x.id)}
+							{@const got = f.includes(x.id)}
+							<span class="var {x.id}" class:got><b>{got ? '✓' : '✗'}</b> {x.label}</span>
 						{/each}
 					</div>
 				</div>
@@ -164,13 +207,28 @@
 					<div class="vars">
 						{#each SIZES as s (s)}
 							{@const got = (entry.sizes ?? []).includes(s)}
-							<span class="var size" class:got>
-								<b>{got ? '✓' : '✗'}</b>
-								{s === 'M' ? 'Normal' : s}
-							</span>
+							<span class="var size" class:got
+								><b>{got ? '✓' : '✗'}</b> {s === 'M' ? 'Normal' : s}</span
+							>
 						{/each}
 					</div>
 				</div>
+
+				{#if pool.length}
+					<div class="block">
+						<h4>Alternate forms</h4>
+						<div class="vars">
+							{#each pool as a (a.key)}
+								{@const got = (entry.alts ?? []).includes(a.key)}
+								{@const k = formKind(a.key)}
+								<span class="var" class:got style:--c={k?.color}>
+									<b>{got ? '✓' : '✗'}</b>
+									{k?.label ?? pretty(a.key)}
+								</span>
+							{/each}
+						</div>
+					</div>
+				{/if}
 
 				{#if dex.isComplete(oid)}
 					<p class="complete">★ Entry complete</p>
@@ -190,18 +248,19 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		padding: 1.5rem;
+		padding: 1rem;
 		background: rgba(6, 4, 16, 0.75);
 		backdrop-filter: blur(6px);
 	}
+	/* sized to the window, so it fits any screen without tuning */
 	.dialog {
 		position: relative;
-		width: min(880px, 100%);
-		max-height: 86vh;
+		width: min(1180px, 100%);
+		height: min(92dvh, 980px);
 		display: flex;
 		flex-direction: column;
-		gap: 0.75rem;
-		padding: 1.6rem;
+		gap: 0.7rem;
+		padding: 1.5rem;
 		border-radius: 16px;
 		background: linear-gradient(150deg, #23242e, #16171d);
 		border: 1px solid rgba(255, 255, 255, 0.09);
@@ -214,19 +273,54 @@
 		align-items: baseline;
 		justify-content: space-between;
 		gap: 1rem;
-		/* keep the counter clear of the close button in the corner */
 		padding-right: 2.6rem;
 	}
 	h2 {
 		margin: 0;
-		font-size: 1.2rem;
+		font-size: 1.25rem;
 	}
 	.total {
-		font-size: 0.9rem;
+		font-size: 0.95rem;
 		font-weight: 700;
 		color: var(--accent);
 		font-variant-numeric: tabular-nums;
 	}
+
+	.tabs {
+		display: flex;
+		gap: 0.3rem;
+		flex-wrap: wrap;
+	}
+	.tab {
+		padding: 0.3rem 0.7rem;
+		border-radius: 999px;
+		border: 1px solid rgba(255, 255, 255, 0.14);
+		background: rgba(255, 255, 255, 0.04);
+		color: #d8d2f0;
+		font-size: 0.76rem;
+		cursor: pointer;
+		white-space: nowrap;
+	}
+	.tab i {
+		font-style: normal;
+		opacity: 0.6;
+		font-variant-numeric: tabular-nums;
+	}
+	.tab.col {
+		border-color: color-mix(in srgb, var(--c) 45%, transparent);
+		color: var(--c);
+	}
+	.tab.on {
+		border-color: var(--accent);
+		background: rgba(var(--accent-rgb), 0.2);
+		color: #d1f6ef;
+	}
+	.tab.col.on {
+		border-color: var(--c);
+		background: color-mix(in srgb, var(--c) 22%, transparent);
+		color: var(--c);
+	}
+
 	.gens {
 		display: flex;
 		gap: 0.3rem;
@@ -249,7 +343,6 @@
 		font-size: 0.76rem;
 		font-weight: 600;
 	}
-	/* the numeral stays, just dimmed so the region name leads */
 	.rom {
 		display: inline-block;
 		min-width: 1.6em;
@@ -274,17 +367,22 @@
 		font-size: 0.78rem;
 		opacity: 0.55;
 	}
+
+	/* bigger tiles, with the name on them */
 	.grid {
+		flex: 1;
+		min-height: 0;
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
-		gap: 0.35rem;
+		grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+		gap: 0.45rem;
 		overflow-y: auto;
 		padding: 0.1rem;
+		align-content: start;
 	}
 	.slot {
 		position: relative;
-		padding: 0.2rem;
-		border-radius: 9px;
+		padding: 0.3rem 0.2rem 0.25rem;
+		border-radius: 10px;
 		border: 1px solid rgba(255, 255, 255, 0.07);
 		background: rgba(255, 255, 255, 0.02);
 		cursor: default;
@@ -297,12 +395,33 @@
 	.slot.got:hover {
 		border-color: var(--accent);
 	}
+	/* finish drives the border, species class only tints the corner strip */
 	.slot.got.shiny {
-		border-color: rgba(240, 200, 90, 0.55);
+		border-color: rgba(240, 200, 90, 0.6);
 		background: rgba(240, 200, 90, 0.09);
 	}
 	.slot.got.shadow {
-		border-color: rgba(170, 110, 220, 0.55);
+		border-color: rgba(170, 110, 220, 0.6);
+	}
+	.slot.got.shiny.shadow {
+		border-color: rgba(255, 138, 224, 0.75);
+		background: rgba(255, 138, 224, 0.1);
+	}
+	.slot.legend::before,
+	.slot.myth::before {
+		content: '';
+		position: absolute;
+		left: 0;
+		right: 0;
+		top: 0;
+		height: 3px;
+		border-radius: 10px 10px 0 0;
+	}
+	.slot.legend::before {
+		background: #ffd166;
+	}
+	.slot.myth::before {
+		background: #ff9ec7;
 	}
 	.slot.done {
 		box-shadow: inset 0 0 0 1px rgba(240, 200, 90, 0.5);
@@ -311,7 +430,6 @@
 		width: 100%;
 		height: auto;
 		image-rendering: pixelated;
-		/* not caught yet = classic black silhouette, no extra request */
 		filter: brightness(0);
 		opacity: 0.32;
 	}
@@ -322,59 +440,78 @@
 	.slot.got.shadow img {
 		filter: brightness(0.78) saturate(0.6);
 	}
+	.nm {
+		display: block;
+		text-align: center;
+		font-size: 0.62rem;
+		line-height: 1.15;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		opacity: 0.35;
+	}
+	.slot.got .nm {
+		opacity: 0.95;
+	}
 	.id {
 		display: block;
 		text-align: center;
-		font-size: 0.56rem;
-		opacity: 0.4;
+		font-size: 0.55rem;
+		opacity: 0.35;
 		font-variant-numeric: tabular-nums;
-	}
-	.slot.got .id {
-		opacity: 0.72;
 	}
 	.cnt {
 		position: absolute;
-		top: 0.1rem;
-		right: 0.22rem;
-		font-size: 0.54rem;
+		top: 0.24rem;
+		right: 0.28rem;
+		font-size: 0.55rem;
 		font-weight: 800;
-		opacity: 0.65;
+		opacity: 0.7;
 	}
 	.star {
 		position: absolute;
-		top: 0.1rem;
-		left: 0.22rem;
-		font-size: 0.6rem;
+		top: 0.24rem;
+		left: 0.28rem;
+		font-size: 0.62rem;
 		color: #f0c85a;
+	}
+	.none {
+		grid-column: 1 / -1;
+		margin: 1rem 0;
+		text-align: center;
+		font-size: 0.85rem;
+		opacity: 0.5;
 	}
 
 	/* ---- detail ---- */
 	.detail {
+		flex: 1;
+		min-height: 0;
 		display: flex;
 		flex-direction: column;
-		gap: 0.8rem;
+		gap: 0.85rem;
 		overflow-y: auto;
 		padding-right: 0.2rem;
 	}
 	.backbtn {
 		align-self: flex-start;
-		padding: 0.3rem 0.7rem;
+		padding: 0.32rem 0.75rem;
 		border-radius: 9px;
 		border: 1px solid rgba(var(--accent-rgb), 0.35);
 		background: rgba(var(--accent-rgb), 0.12);
 		color: #d1f6ef;
-		font-size: 0.8rem;
+		font-size: 0.82rem;
 		cursor: pointer;
 	}
 	.hero {
 		display: flex;
 		align-items: center;
-		gap: 1.2rem;
+		gap: 1.4rem;
 		flex-wrap: wrap;
 	}
 	.art {
-		width: 120px;
-		height: 120px;
+		width: 150px;
+		height: 150px;
 		object-fit: contain;
 		image-rendering: pixelated;
 	}
@@ -383,52 +520,58 @@
 	}
 	h3 {
 		margin: 0;
-		font-size: 1.3rem;
+		font-size: 1.5rem;
 	}
 	.eid {
-		font-size: 0.76rem;
+		font-size: 0.78rem;
 		opacity: 0.5;
 		font-variant-numeric: tabular-nums;
 	}
-	.types {
+	.badges {
 		display: flex;
 		gap: 0.3rem;
-		margin: 0.45rem 0;
+		flex-wrap: wrap;
+		margin: 0.5rem 0;
 	}
-	.type {
-		padding: 0.16rem 0.55rem;
+	.badge {
+		padding: 0.18rem 0.6rem;
 		border-radius: 999px;
-		font-size: 0.68rem;
+		font-size: 0.7rem;
 		font-weight: 700;
 		text-transform: capitalize;
-		background: rgba(255, 255, 255, 0.1);
-		border: 1px solid rgba(255, 255, 255, 0.16);
+		color: var(--c, #ece9f7);
+		background: color-mix(in srgb, var(--c, #ffffff) 18%, transparent);
+		border: 1px solid color-mix(in srgb, var(--c, #ffffff) 45%, transparent);
+	}
+	.badge.type {
+		--c: #9aa3ad;
 	}
 	.meta {
 		margin: 0;
-		font-size: 0.8rem;
+		font-size: 0.84rem;
 		opacity: 0.75;
 		line-height: 1.5;
 	}
 	.block h4 {
 		margin: 0 0 0.4rem;
-		font-size: 0.82rem;
+		font-size: 0.84rem;
 		opacity: 0.65;
 		font-weight: 700;
 	}
 	.stats {
 		display: grid;
 		grid-template-columns: auto 1fr auto;
-		gap: 0.3rem 0.6rem;
+		gap: 0.32rem 0.6rem;
 		align-items: center;
+		max-width: 460px;
 	}
 	.sname {
-		font-size: 0.72rem;
+		font-size: 0.74rem;
 		opacity: 0.65;
 	}
 	.sbar {
 		display: block;
-		height: 7px;
+		height: 8px;
 		border-radius: 999px;
 		background: rgba(255, 255, 255, 0.08);
 		overflow: hidden;
@@ -440,7 +583,7 @@
 		background: linear-gradient(90deg, var(--accent), #57c9ba);
 	}
 	.sval {
-		font-size: 0.72rem;
+		font-size: 0.74rem;
 		font-weight: 700;
 		font-variant-numeric: tabular-nums;
 		min-width: 26px;
@@ -455,31 +598,28 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 0.35rem;
-		padding: 0.3rem 0.65rem;
+		padding: 0.32rem 0.7rem;
 		border-radius: 999px;
 		border: 1px solid rgba(255, 255, 255, 0.1);
 		background: rgba(255, 255, 255, 0.03);
-		font-size: 0.76rem;
+		font-size: 0.78rem;
 		opacity: 0.5;
 	}
 	.var b {
-		font-size: 0.7rem;
+		font-size: 0.72rem;
 	}
 	.var.got {
 		opacity: 1;
-		border-color: rgba(var(--accent-rgb), 0.5);
-		background: rgba(var(--accent-rgb), 0.14);
+		border-color: color-mix(in srgb, var(--c, #79e2d5) 55%, transparent);
+		background: color-mix(in srgb, var(--c, #79e2d5) 16%, transparent);
+		color: var(--c, #d1f6ef);
 	}
 	.var.shiny.got,
 	.var.shinyShadow.got {
-		border-color: rgba(240, 200, 90, 0.6);
-		background: rgba(240, 200, 90, 0.16);
-		color: #f0c85a;
+		--c: #f0c85a;
 	}
 	.var.shadow.got {
-		border-color: rgba(170, 110, 220, 0.6);
-		background: rgba(170, 110, 220, 0.16);
-		color: #c79bea;
+		--c: #b47ae0;
 	}
 	.complete {
 		margin: 0;

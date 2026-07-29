@@ -4,11 +4,25 @@
 const LS_DEX = 'pb_dex';
 const LS_BASE = 'pb_dexbase';
 
-export const DEX_MAX = 1025; // up to gen 9, excluding alternate forms
+export const DEX_MAX = 1025; // national dex; ids above 10000 are alternate forms
+export const API_MAX = 1400; // enough to cover every form entry
 export const PACK_SIZE = 5;
 
 const SHINY_ODDS = 50;
 const SHADOW_ODDS = 12;
+const ALT_FORM_CHANCE = 0.18; // when a species has alternate forms
+
+// baked in (71 + 23 ids) so class lookups cost nothing at runtime
+const LEGENDARY = new Set([
+	144, 145, 146, 150, 243, 244, 245, 249, 250, 377, 378, 379, 380, 381, 382, 383, 384, 480, 481,
+	482, 483, 484, 485, 486, 487, 488, 638, 639, 640, 641, 642, 643, 644, 645, 646, 716, 717, 718,
+	772, 773, 785, 786, 787, 788, 789, 790, 791, 792, 800, 888, 889, 890, 891, 892, 894, 895, 896,
+	897, 898, 905, 1001, 1002, 1003, 1004, 1007, 1008, 1014, 1015, 1016, 1017, 1024
+]);
+const MYTHICAL = new Set([
+	151, 251, 385, 386, 489, 490, 491, 492, 493, 494, 647, 648, 649, 719, 720, 721, 801, 802, 807,
+	808, 809, 893, 1025
+]);
 
 export const GENS: { label: string; name: string; from: number; to: number }[] = [
 	{ label: 'I', name: 'Kanto', from: 1, to: 151 },
@@ -25,7 +39,6 @@ export const GENS: { label: string; name: string; from: number; to: number }[] =
 export type Size = 'XXS' | 'XS' | 'M' | 'XL' | 'XXL';
 export type Form = 'normal' | 'shiny' | 'shadow' | 'shinyShadow';
 
-// every collectible state of one species, so a dex entry can be "completed"
 export const SIZES: Size[] = ['XXS', 'XS', 'M', 'XL', 'XXL'];
 export const FORMS: { id: Form; label: string }[] = [
 	{ id: 'normal', label: 'Normal' },
@@ -34,20 +47,41 @@ export const FORMS: { id: Form; label: string }[] = [
 	{ id: 'shinyShadow', label: 'Shiny Shadow' }
 ];
 
+// how an alternate form is classed + coloured. Order matters, first hit wins.
+const FORM_KINDS: { test: RegExp; kind: string; label: string; color: string }[] = [
+	{ test: /^mega/, kind: 'mega', label: 'Mega', color: '#ff6b6b' },
+	{ test: /^gmax/, kind: 'gmax', label: 'Gigantamax', color: '#ff7ad9' },
+	{ test: /^primal/, kind: 'primal', label: 'Primal', color: '#ff9f43' },
+	{ test: /^alola/, kind: 'alola', label: 'Alolan', color: '#4fd1c5' },
+	{ test: /^galar/, kind: 'galar', label: 'Galarian', color: '#8ab4f8' },
+	{ test: /^hisui/, kind: 'hisui', label: 'Hisuian', color: '#c39b6b' },
+	{ test: /^paldea/, kind: 'paldea', label: 'Paldean', color: '#a3d977' },
+	{ test: /^totem/, kind: 'totem', label: 'Totem', color: '#e0a458' }
+];
+
+export interface AltForm {
+	key: string; // 'mega-x', 'alola', ...
+	spriteId: number;
+	name: string; // full api name, used for the animated sprite
+}
+
 export interface Catch {
-	id: number;
+	id: number; // species dex id
+	spriteId: number; // id used for the still sprite (form id when it is a form)
 	name: string;
+	form: string; // '' = base species
 	shiny: boolean;
 	shadow: boolean;
 	size: Size;
-	height: number; // m
-	weight: number; // kg
+	height: number;
+	weight: number;
 }
 
 export interface Entry {
 	count: number;
 	forms: Form[];
 	sizes: Size[];
+	alts: string[]; // alternate form keys caught
 	best: Catch;
 }
 
@@ -83,6 +117,19 @@ export function pretty(name: string) {
 		.join(' ');
 }
 
+export function isLegendary(id: number) {
+	return LEGENDARY.has(id);
+}
+export function isMythical(id: number) {
+	return MYTHICAL.has(id);
+}
+
+export function formKind(key: string) {
+	if (!key) return null;
+	for (const f of FORM_KINDS) if (f.test.test(key)) return f;
+	return { kind: 'variant', label: pretty(key), color: '#9aa3ad' };
+}
+
 export function formOf(c: { shiny: boolean; shadow: boolean }): Form {
 	if (c.shiny && c.shadow) return 'shinyShadow';
 	if (c.shiny) return 'shiny';
@@ -90,19 +137,17 @@ export function formOf(c: { shiny: boolean; shadow: boolean }): Form {
 	return 'normal';
 }
 
-// rarity drives the colour of the reveal
-export function rarityOf(c: Catch): { tier: string; label: string; color: string } {
+// glow/border colour comes only from the finish, so it never fights the badges
+export function finishOf(c: { shiny: boolean; shadow: boolean }) {
 	const f = formOf(c);
 	if (f === 'shinyShadow') return { tier: 'shinyShadow', label: 'SHINY SHADOW', color: '#ff8ae0' };
 	if (f === 'shiny') return { tier: 'shiny', label: 'SHINY', color: '#f0c85a' };
 	if (f === 'shadow') return { tier: 'shadow', label: 'SHADOW', color: '#b47ae0' };
-	if (c.size === 'XXL' || c.size === 'XXS') return { tier: 'size', label: c.size, color: '#79e2d5' };
 	return { tier: 'common', label: '', color: '#8b93a3' };
 }
 
 // one roll drives both height and weight, the way GO derives its size tags
 function rollSize(): { mult: number; size: Size } {
-	// average of three uniforms -> clusters around 1, extremes stay rare
 	const r = (Math.random() + Math.random() + Math.random()) / 3;
 	const mult = 0.6 + r * 0.85;
 	let size: Size = 'M';
@@ -114,15 +159,16 @@ function rollSize(): { mult: number; size: Size } {
 }
 
 class DexStore {
-	names = $state<string[]>([]); // index 0 = id 1
+	names = $state<string[]>([]); // index 0 = species id 1
+	alts = $state<Record<number, AltForm[]>>({}); // species id -> alternate forms
 	dex = $state<Record<number, Entry>>({});
 	base = $state<Record<number, Base>>({});
 	pack = $state<Catch[]>([]);
-	opened = $state<number[]>([]); // indexes of the pack already flipped
+	opened = $state<number[]>([]);
 	opening = $state(false);
+	lastSpecial = $state<Catch | null>(null); // drives the shiny shadow flourish
 
-	// entries saved before forms/sizes existed carried { shiny, shadow } booleans
-	// and used '' for the normal size. Bring them up to date instead of losing them.
+	// older saves had { shiny, shadow } booleans and '' for the normal size
 	private migrate(raw: Record<string, unknown>): Record<number, Entry> {
 		const out: Record<number, Entry> = {};
 		for (const [k, v] of Object.entries(raw ?? {})) {
@@ -141,7 +187,8 @@ class DexStore {
 			out[Number(k)] = {
 				count: e.count ?? 1,
 				forms: [...new Set(forms)] as Form[],
-				sizes: [...new Set(sizes.length ? sizes : ['M' as Size])],
+				sizes: [...new Set(sizes.length ? sizes : (['M'] as Size[]))],
+				alts: Array.isArray(e.alts) ? e.alts : [],
 				best: e.best as Catch
 			};
 		}
@@ -159,9 +206,51 @@ class DexStore {
 		}
 		if (this.names.length) return;
 		try {
-			const res = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=${DEX_MAX}`);
+			// one request covers both the 1025 species and all 326 alternate forms
+			const res = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=${API_MAX}`);
 			const json = await res.json();
-			this.names = (json.results ?? []).map((p: { name: string }) => p.name);
+			const rows: { name: string; url: string }[] = json.results ?? [];
+
+			const names: string[] = [];
+			const byName: Record<string, number> = {};
+			const rest: { id: number; name: string }[] = [];
+			for (const r of rows) {
+				const id = Number(r.url.replace(/\/$/, '').split('/').pop());
+				if (id <= DEX_MAX) {
+					names[id - 1] = r.name;
+					byName[r.name] = id;
+				} else rest.push({ id, name: r.name });
+			}
+
+			// species like deoxys are listed as 'deoxys-normal', so allow the bare
+			// head as an alias when it is unambiguous
+			const heads: Record<string, Set<number>> = {};
+			for (const [n, id] of Object.entries(byName)) {
+				const h = n.split('-')[0];
+				(heads[h] ??= new Set()).add(id);
+			}
+			const alias: Record<string, number> = {};
+			for (const [h, s] of Object.entries(heads)) {
+				if (s.size === 1 && !(h in byName)) alias[h] = [...s][0];
+			}
+
+			const alts: Record<number, AltForm[]> = {};
+			for (const f of rest) {
+				const parts = f.name.split('-');
+				for (let cut = parts.length - 1; cut > 0; cut--) {
+					const head = parts.slice(0, cut).join('-');
+					const sid = byName[head] ?? (cut === 1 ? alias[head] : undefined);
+					if (!sid) continue;
+					(alts[sid] ??= []).push({
+						key: parts.slice(cut).join('-'),
+						spriteId: f.id,
+						name: f.name
+					});
+					break;
+				}
+			}
+			this.names = names;
+			this.alts = alts;
 		} catch {
 			/* ignore */
 		}
@@ -179,26 +268,59 @@ class DexStore {
 	get caughtCount() {
 		return Object.keys(this.dex).length;
 	}
-	get shinyCount() {
-		return Object.values(this.dex).filter((e) => (e.forms ?? []).some((f) => f.startsWith('shiny')))
-			.length;
-	}
-	get shadowCount() {
-		return Object.values(this.dex).filter((e) => (e.forms ?? []).includes('shadow')).length;
+
+	// ids matching a collection filter, used by the header chips + dex popup
+	idsWhere(kind: string): number[] {
+		const out: number[] = [];
+		for (const [k, e] of Object.entries(this.dex)) {
+			const id = Number(k);
+			const forms = e.forms ?? [];
+			const alts = e.alts ?? [];
+			let hit = false;
+			switch (kind) {
+				case 'shiny':
+					hit = forms.includes('shiny') || forms.includes('shinyShadow');
+					break;
+				case 'shadow':
+					hit = forms.includes('shadow') || forms.includes('shinyShadow');
+					break;
+				case 'shinyShadow':
+					hit = forms.includes('shinyShadow');
+					break;
+				case 'legendary':
+					hit = LEGENDARY.has(id);
+					break;
+				case 'mythical':
+					hit = MYTHICAL.has(id);
+					break;
+				default:
+					hit = alts.some((a) => formKind(a)?.kind === kind);
+			}
+			if (hit) out.push(id);
+		}
+		return out.sort((a, b) => a - b);
 	}
 
-	// a species is "complete" once every form and size has been seen
+	countOf(kind: string) {
+		return this.idsWhere(kind).length;
+	}
+
+	// a species is complete once every finish, size and alternate form is seen
 	isComplete(id: number) {
 		const e = this.dex[id];
-		return !!e && (e.forms ?? []).length === FORMS.length && (e.sizes ?? []).length === SIZES.length;
+		if (!e) return false;
+		const wanted = (this.alts[id] ?? []).length;
+		return (
+			(e.forms ?? []).length === FORMS.length &&
+			(e.sizes ?? []).length === SIZES.length &&
+			(e.alts ?? []).length === wanted
+		);
 	}
 
 	statLabel(k: string) {
 		return STAT_LABEL[k] ?? k;
 	}
 
-	// types/stats/size come from one endpoint, cached on disk so a species
-	// is fetched at most once ever
 	async loadBase(id: number): Promise<Base> {
 		if (this.base[id]) return this.base[id];
 		let b: Base = { height: 1, weight: 10, types: [], stats: [] };
@@ -229,6 +351,7 @@ class DexStore {
 		this.opening = true;
 		this.pack = [];
 		this.opened = [];
+		this.lastSpecial = null;
 
 		const ids = Array.from(
 			{ length: PACK_SIZE },
@@ -238,9 +361,15 @@ class DexStore {
 
 		this.pack = ids.map((id, k) => {
 			const { mult, size } = rollSize();
+			const pool = this.alts[id] ?? [];
+			const alt = pool.length && Math.random() < ALT_FORM_CHANCE
+				? pool[Math.floor(Math.random() * pool.length)]
+				: null;
 			return {
 				id,
-				name: this.names[id - 1],
+				spriteId: alt ? alt.spriteId : id,
+				name: alt ? alt.name : this.names[id - 1],
+				form: alt ? alt.key : '',
 				shiny: Math.floor(Math.random() * SHINY_ODDS) === 0,
 				shadow: Math.floor(Math.random() * SHADOW_ODDS) === 0,
 				size,
@@ -251,35 +380,53 @@ class DexStore {
 		this.opening = false;
 	}
 
-	// recorded on flip, so the dex only counts what you actually looked at
 	flip(i: number) {
 		if (this.opened.includes(i)) return;
 		this.opened = [...this.opened, i];
 		const c = this.pack[i];
-		if (c) this.record(c);
+		if (!c) return;
+		this.record(c);
 		this.persist();
+		if (c.shiny && c.shadow) this.lastSpecial = c;
+	}
+
+	flipAll() {
+		for (let i = 0; i < this.pack.length; i++) this.flip(i);
 	}
 
 	get allFlipped() {
 		return this.pack.length > 0 && this.opened.length === this.pack.length;
 	}
 
-	// was this the first ever catch of the species?
 	wasNew(i: number) {
 		const c = this.pack[i];
 		return !!c && this.dex[c.id]?.count === 1;
+	}
+
+	clearSpecial() {
+		this.lastSpecial = null;
 	}
 
 	private record(c: Catch) {
 		const form = formOf(c);
 		const cur = this.dex[c.id];
 		if (!cur) {
-			this.dex = { ...this.dex, [c.id]: { count: 1, forms: [form], sizes: [c.size], best: c } };
+			this.dex = {
+				...this.dex,
+				[c.id]: {
+					count: 1,
+					forms: [form],
+					sizes: [c.size],
+					alts: c.form ? [c.form] : [],
+					best: c
+				}
+			};
 			return;
 		}
 		const forms = (cur.forms ?? []).includes(form) ? cur.forms : [...(cur.forms ?? []), form];
 		const sizes = (cur.sizes ?? []).includes(c.size) ? cur.sizes : [...(cur.sizes ?? []), c.size];
-		// showcase the most interesting catch: shiny beats shadow beats heavier
+		const alts =
+			c.form && !(cur.alts ?? []).includes(c.form) ? [...(cur.alts ?? []), c.form] : (cur.alts ?? []);
 		const better =
 			(c.shiny && !cur.best.shiny) ||
 			(c.shiny === cur.best.shiny && c.shadow && !cur.best.shadow) ||
@@ -287,13 +434,14 @@ class DexStore {
 		// whole-object reassign so the counters repaint straight away
 		this.dex = {
 			...this.dex,
-			[c.id]: { count: cur.count + 1, forms, sizes, best: better ? c : cur.best }
+			[c.id]: { count: cur.count + 1, forms, sizes, alts, best: better ? c : cur.best }
 		};
 	}
 
 	clearPack() {
 		this.pack = [];
 		this.opened = [];
+		this.lastSpecial = null;
 	}
 
 	reset() {
