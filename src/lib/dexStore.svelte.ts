@@ -47,16 +47,23 @@ export const FORMS: { id: Form; label: string }[] = [
 	{ id: 'shinyShadow', label: 'Shiny Shadow' }
 ];
 
-// how an alternate form is classed + coloured. Order matters, first hit wins.
+// How an alternate form is classed + coloured. Order matters, first hit wins.
+// Matched as a whole segment, not just a prefix, so urshifu-rapid-strike-gmax
+// and tatsugiri-droopy-mega land in the right bucket too.
+const seg = (w: string) => new RegExp(`(^|-)(${w})(-|$)`);
 const FORM_KINDS: { test: RegExp; kind: string; label: string; color: string }[] = [
-	{ test: /^mega/, kind: 'mega', label: 'Mega', color: '#ff6b6b' },
-	{ test: /^gmax/, kind: 'gmax', label: 'Gigantamax', color: '#ff7ad9' },
-	{ test: /^primal/, kind: 'primal', label: 'Primal', color: '#ff9f43' },
-	{ test: /^alola/, kind: 'alola', label: 'Alolan', color: '#4fd1c5' },
-	{ test: /^galar/, kind: 'galar', label: 'Galarian', color: '#8ab4f8' },
-	{ test: /^hisui/, kind: 'hisui', label: 'Hisuian', color: '#c39b6b' },
-	{ test: /^paldea/, kind: 'paldea', label: 'Paldean', color: '#a3d977' },
-	{ test: /^totem/, kind: 'totem', label: 'Totem', color: '#e0a458' }
+	{ test: seg('mega'), kind: 'mega', label: 'Mega', color: '#ff6b6b' },
+	{ test: seg('gmax|eternamax'), kind: 'gmax', label: 'Gigantamax', color: '#ff7ad9' },
+	{ test: seg('primal'), kind: 'primal', label: 'Primal', color: '#ff9f43' },
+	{ test: seg('alola'), kind: 'alola', label: 'Alolan', color: '#4fd1c5' },
+	{ test: seg('galar'), kind: 'galar', label: 'Galarian', color: '#8ab4f8' },
+	{ test: seg('hisui'), kind: 'hisui', label: 'Hisuian', color: '#c39b6b' },
+	{ test: seg('paldea'), kind: 'paldea', label: 'Paldean', color: '#a3d977' },
+	{ test: seg('totem'), kind: 'totem', label: 'Totem', color: '#e0a458' },
+	{ test: seg('terastal|stellar'), kind: 'terastal', label: 'Terastal', color: '#8fe3ff' },
+	{ test: seg('origin'), kind: 'origin', label: 'Origin', color: '#b98cff' },
+	{ test: seg('therian'), kind: 'therian', label: 'Therian', color: '#87c5a4' },
+	{ test: seg('crowned'), kind: 'crowned', label: 'Crowned', color: '#ffcf5c' }
 ];
 
 export interface AltForm {
@@ -329,6 +336,27 @@ class DexStore {
 
 	countOf(kind: string) {
 		return this.idsWhere(kind).length;
+	}
+
+	// how many species could ever land in a collection, so a chip can read "21 / 93"
+	totalOf(kind: string): number {
+		switch (kind) {
+			case 'shiny':
+			case 'shadow':
+			case 'shinyShadow':
+				return DEX_MAX; // any species can roll these
+			case 'legendary':
+				return LEGENDARY.size;
+			case 'mythical':
+				return MYTHICAL.size;
+			default: {
+				let n = 0;
+				for (const list of Object.values(this.alts)) {
+					if (list.some((a) => formKind(a.key)?.kind === kind)) n++;
+				}
+				return n;
+			}
+		}
 	}
 
 	// the caught alternate form of a given kind, so a filtered grid can show

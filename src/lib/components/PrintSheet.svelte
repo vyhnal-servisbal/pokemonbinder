@@ -16,7 +16,7 @@
 					{#if item.type === 'card' && item.card?.image}
 						<img src={item.card.image} alt={item.card.name} />
 					{:else if item.type === 'image' && item.imageUrl}
-						<img src={item.imageUrl} alt="" />
+						<img src={item.imageUrl} alt="" class:flip={item.flip} />
 					{/if}
 				</div>
 			{/each}
@@ -40,5 +40,9 @@
 		width: 100%;
 		height: 100%;
 		object-fit: cover;
+	}
+	/* keep a mirrored image mirrored on paper too */
+	.cell img.flip {
+		transform: scaleX(-1);
 	}
 </style>

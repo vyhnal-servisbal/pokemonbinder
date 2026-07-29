@@ -24,6 +24,7 @@ export interface PlacedItem {
 	type: ItemType;
 	card?: PokemonCard;
 	imageUrl?: string;
+	flip?: boolean; // mirror an uploaded image horizontally
 	crop?: { x: number; y: number; scale: number };
 }
 

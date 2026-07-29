@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import { fade, scale } from 'svelte/transition';
 	import DexModal from '$lib/components/DexModal.svelte';
 	import {
@@ -26,6 +26,17 @@
 		{ id: 'shinyShadow', label: 'shiny shadow', color: '#ff8ae0' },
 		{ id: 'mega', label: 'mega', color: '#ff6b6b' },
 		{ id: 'gmax', label: 'gigantamax', color: '#ff7ad9' },
+		{ id: 'primal', label: 'primal', color: '#ff9f43' },
+		{ id: 'terastal', label: 'terastal', color: '#8fe3ff' },
+		{ id: 'origin', label: 'origin', color: '#b98cff' },
+		{ id: 'therian', label: 'therian', color: '#87c5a4' },
+		{ id: 'crowned', label: 'crowned', color: '#ffcf5c' },
+		{ id: 'alola', label: 'alolan', color: '#4fd1c5' },
+		{ id: 'galar', label: 'galarian', color: '#8ab4f8' },
+		{ id: 'hisui', label: 'hisuian', color: '#c39b6b' },
+		{ id: 'paldea', label: 'paldean', color: '#a3d977' },
+		{ id: 'totem', label: 'totem', color: '#e0a458' },
+		{ id: 'variant', label: 'other forms', color: '#9aa3ad' },
 		{ id: 'legendary', label: 'legendary', color: '#ffd166' },
 		{ id: 'mythical', label: 'mythical', color: '#ff9ec7' }
 	];
@@ -35,13 +46,40 @@
 		showDex = true;
 	}
 
+	// a few forms (the Koraidon/Miraidon build modes) have no sprite anywhere, so
+	// step down: animated form -> static form -> plain species
 	function fallback(e: Event, c: Catch) {
 		const img = e.currentTarget as HTMLImageElement;
-		if (!img.dataset.fb) {
+		const step = Number(img.dataset.fb ?? 0);
+		if (step === 0) {
 			img.dataset.fb = '1';
 			img.src = spriteOf(c.spriteId ?? c.id, c.shiny);
+		} else if (step === 1) {
+			img.dataset.fb = '2';
+			img.src = spriteOf(c.id, c.shiny);
 		}
 	}
+
+	// object-fit already fits each sprite to the box, so what still looks uneven is
+	// aspect ratio: a wide fish reads small, a tall deer reads narrow. Even out the
+	// drawn AREA instead. After contain, area = w*h*(box/max(w,h))^2, so the
+	// correction reduces to max(w,h)/sqrt(w*h) and never depends on the box.
+	const SIZE_FACTOR: Record<string, number> = { XXS: 0.8, XS: 0.9, M: 1, XL: 1.1, XXL: 1.22 };
+	let scales = $state<Record<number, number>>({});
+
+	function measure(e: Event, i: number, c: Catch) {
+		const img = e.currentTarget as HTMLImageElement;
+		const w = img.naturalWidth || 96;
+		const h = img.naturalHeight || 96;
+		const norm = Math.min(1.15, Math.max(0.85, (0.86 * Math.max(w, h)) / Math.sqrt(w * h)));
+		scales = { ...scales, [i]: norm * (SIZE_FACTOR[c.size] ?? 1) };
+	}
+
+	// a fresh pack starts from unmeasured
+	$effect(() => {
+		dex.pack;
+		untrack(() => (scales = {}));
+	});
 
 	// space does the next sensible thing, so a whole session needs no clicking:
 	// open a pack, reveal the lot, then straight on to the next pack
@@ -86,15 +124,29 @@
 		<a class="back" href="/">‹ Binder</a>
 		<h1>Unboxing</h1>
 
+		<button
+			class="spacebtn"
+			class:on={spaceMode}
+			onclick={() => (spaceMode = !spaceMode)}
+			title={spaceMode
+				? 'Space opens a pack, then reveals all of it'
+				: 'Turn on to play with the spacebar'}
+			aria-pressed={spaceMode}
+		>
+			<span class="knob"></span>
+			Space {spaceMode ? 'on' : 'off'}
+		</button>
+
 		<div class="chips">
 			<button class="chip main" onclick={() => openDex()}>
 				<b>{dex.caughtCount}</b><span class="of">/ {DEX_MAX}</span> caught
 			</button>
 			{#each CHIPS as c (c.id)}
 				{@const n = dex.countOf(c.id)}
-				{#if n > 0}
+				{@const t = dex.totalOf(c.id)}
+				{#if t > 0}
 					<button class="chip" style:--c={c.color} onclick={() => openDex(c.id)}>
-						<b>{n}</b>
+						<b>{n}</b><span class="of">/ {t}</span>
 						{c.label}
 					</button>
 				{/if}
@@ -105,14 +157,6 @@
 </header>
 
 <main class="wrap">
-	<label class="spacetoggle" class:on={spaceMode}>
-		<input type="checkbox" bind:checked={spaceMode} />
-		<span class="knob"></span>
-		<span
-			>Spacebar mode {spaceMode ? 'on · space opens a pack, then reveals all of it' : 'off'}</span
-		>
-	</label>
-
 	{#if !dex.pack.length}
 		<button class="pack" onclick={() => dex.openPack()} disabled={dex.opening}>
 			<span class="ball"></span>
@@ -136,29 +180,36 @@
 				>
 					{#if shown}
 						{#if fin.tier === 'shiny' || fin.tier === 'shinyShadow'}
-							<span class="rays"></span>
-							{#each [0, 1, 2, 3, 4, 5] as s (s)}
-								<span class="spark" style:--d="{s * 0.16}s" style:--a="{s * 60}deg"></span>
-							{/each}
+							<span class="sheen"></span>
+						{/if}
+
+						<!-- corners: size on the left, new entry on the right -->
+						{#if c.size !== 'M'}
+							<span class="corner left">{c.size}</span>
+						{/if}
+						{#if dex.wasNew(i)}
+							<span class="corner right">NEW</span>
 						{/if}
 
 						<span class="face" in:scale={{ duration: 280, start: 0.55 }}>
-							<img
-								src={aniOf(c.name, c.shiny)}
-								alt={c.name}
-								onerror={(e) => fallback(e, c)}
-								draggable="false"
-							/>
+							<span class="artbox">
+								<img
+									src={aniOf(c.name, c.shiny)}
+									alt={c.name}
+									style:transform="scale({scales[i] ?? 1})"
+									onload={(e) => measure(e, i, c)}
+									onerror={(e) => fallback(e, c)}
+									draggable="false"
+								/>
+							</span>
 							<span class="info">
 								<b class="nm">{pretty(c.name)}</b>
 
 								<span class="tags">
-								{#if dex.wasNew(i)}<span class="tag" style:--t="#7fe0a4">NEW</span>{/if}
-								{#if fin.label}<span class="tag" style:--t={fin.color}>{fin.label}</span>{/if}
-								{#if fk}<span class="tag" style:--t={fk.color}>{fk.label}</span>{/if}
-								{#if isLegendary(c.id)}<span class="tag" style:--t="#ffd166">LEGENDARY</span>{/if}
-								{#if isMythical(c.id)}<span class="tag" style:--t="#ff9ec7">MYTHICAL</span>{/if}
-									{#if c.size !== 'M'}<span class="tag" style:--t="#79e2d5">{c.size}</span>{/if}
+									{#if fin.label}<span class="tag" style:--t={fin.color}>{fin.label}</span>{/if}
+									{#if fk}<span class="tag" style:--t={fk.color}>{fk.label}</span>{/if}
+									{#if isLegendary(c.id)}<span class="tag" style:--t="#ffd166">LEGENDARY</span>{/if}
+									{#if isMythical(c.id)}<span class="tag" style:--t="#ff9ec7">MYTHICAL</span>{/if}
 								</span>
 							</span>
 
@@ -289,36 +340,31 @@
 		overflow-y: auto; /* only scrolls if a pack really cannot fit */
 	}
 
-	/* ---- spacebar toggle ---- */
-	.spacetoggle {
+	/* compact spacebar switch, lives in the header next to the title */
+	.spacebtn {
 		display: inline-flex;
 		align-items: center;
-		gap: 0.55rem;
-		padding: 0.35rem 0.85rem 0.35rem 0.4rem;
+		gap: 0.45rem;
+		padding: 0.3rem 0.75rem 0.3rem 0.35rem;
 		border-radius: 999px;
 		border: 1px solid rgba(255, 255, 255, 0.14);
 		background: rgba(255, 255, 255, 0.04);
-		font-size: 0.78rem;
+		color: #d8d2f0;
+		font-size: 0.76rem;
 		cursor: pointer;
-		user-select: none;
+		white-space: nowrap;
 	}
-	.spacetoggle.on {
+	.spacebtn.on {
 		border-color: var(--accent);
 		background: rgba(var(--accent-rgb), 0.16);
 		color: #d1f6ef;
 	}
-	.spacetoggle input {
-		position: absolute;
-		opacity: 0;
-		width: 0;
-		height: 0;
-	}
 	.knob {
 		position: relative;
-		width: 34px;
-		height: 19px;
+		width: 30px;
+		height: 17px;
 		border-radius: 999px;
-		background: rgba(255, 255, 255, 0.16);
+		background: rgba(255, 255, 255, 0.18);
 		transition: background 0.18s;
 		flex: none;
 	}
@@ -327,17 +373,17 @@
 		position: absolute;
 		top: 2px;
 		left: 2px;
-		width: 15px;
-		height: 15px;
+		width: 13px;
+		height: 13px;
 		border-radius: 50%;
 		background: #fff;
 		transition: transform 0.18s;
 	}
-	.spacetoggle.on .knob {
+	.spacebtn.on .knob {
 		background: var(--accent);
 	}
-	.spacetoggle.on .knob::after {
-		transform: translateX(15px);
+	.spacebtn.on .knob::after {
+		transform: translateX(13px);
 	}
 
 	/* ---- the pack ---- */
@@ -422,7 +468,7 @@
 	}
 	.card {
 		position: relative;
-		width: clamp(150px, min(19vw, 32dvh), 230px);
+		width: clamp(172px, min(22vw, 38dvh), 284px);
 		aspect-ratio: 3 / 4;
 		padding: 0;
 		border-radius: 16px;
@@ -494,11 +540,23 @@
 		text-align: center;
 		z-index: 2;
 	}
+	/* the sprite gets its own flexible band, so it fills the card instead of
+	   leaving a hole in the middle */
+	.artbox {
+		flex: 1;
+		min-height: 0;
+		width: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
 	.face img {
-		width: clamp(84px, 10vw, 122px);
-		height: clamp(84px, 10vw, 122px);
+		width: clamp(96px, 11.5vw, 150px);
+		height: clamp(96px, 11.5vw, 150px);
 		object-fit: contain;
 		image-rendering: pixelated;
+		transform-origin: center bottom;
+		transition: transform 0.2s ease;
 	}
 	.info {
 		display: flex;
@@ -545,47 +603,79 @@
 		border: 1px solid color-mix(in srgb, var(--t) 45%, transparent);
 	}
 
-	.rays {
+	/* foil sweep: a glossy band crosses the card, like tilting a real holo card */
+	.sheen {
 		position: absolute;
-		inset: -40%;
-		background: conic-gradient(
-			from 0deg,
-			transparent 0 10deg,
-			color-mix(in srgb, var(--rc) 35%, transparent) 10deg 14deg,
-			transparent 14deg 30deg
+		inset: 0;
+		overflow: hidden;
+		pointer-events: none;
+		border-radius: inherit;
+	}
+	.sheen::before {
+		content: '';
+		position: absolute;
+		top: -60%;
+		bottom: -60%;
+		width: 45%;
+		left: -60%;
+		background: linear-gradient(
+			100deg,
+			transparent,
+			color-mix(in srgb, var(--rc) 35%, transparent) 42%,
+			rgba(255, 255, 255, 0.55) 50%,
+			color-mix(in srgb, var(--rc) 35%, transparent) 58%,
+			transparent
 		);
-		animation: spin 9s linear infinite;
-		opacity: 0.55;
-		pointer-events: none;
+		filter: blur(2px);
+		transform: rotate(12deg);
+		animation: sweep 3.4s ease-in-out infinite;
 	}
-	@keyframes spin {
-		to {
-			transform: rotate(360deg);
-		}
-	}
-	.spark {
+	/* faint holo wash underneath, so the card reads as foil even between sweeps */
+	.sheen::after {
+		content: '';
 		position: absolute;
-		left: 50%;
-		top: 50%;
-		width: 7px;
-		height: 7px;
-		border-radius: 50%;
-		background: var(--rc);
-		box-shadow: 0 0 10px var(--rc);
-		transform: rotate(var(--a)) translateY(-52px);
-		animation: twinkle 1.5s ease-in-out infinite var(--d);
-		pointer-events: none;
+		inset: 0;
+		background: linear-gradient(
+			135deg,
+			color-mix(in srgb, var(--rc) 14%, transparent),
+			transparent 40%,
+			color-mix(in srgb, var(--rc) 10%, transparent) 70%,
+			transparent
+		);
 	}
-	@keyframes twinkle {
-		0%,
+	@keyframes sweep {
+		0% {
+			left: -60%;
+		}
+		55%,
 		100% {
-			opacity: 0;
-			scale: 0.4;
+			left: 130%;
 		}
-		50% {
-			opacity: 1;
-			scale: 1.15;
-		}
+	}
+
+	/* corner tags */
+	.corner {
+		position: absolute;
+		top: 0.5rem;
+		z-index: 3;
+		padding: 0.16rem 0.5rem;
+		border-radius: 7px;
+		font-size: clamp(0.6rem, 1.1vh, 0.7rem);
+		font-weight: 800;
+		letter-spacing: 0.04em;
+		line-height: 1.2;
+	}
+	.corner.left {
+		left: 0.5rem;
+		color: #79e2d5;
+		background: rgba(121, 226, 213, 0.18);
+		border: 1px solid rgba(121, 226, 213, 0.5);
+	}
+	.corner.right {
+		right: 0.5rem;
+		color: #7fe0a4;
+		background: rgba(127, 224, 164, 0.18);
+		border: 1px solid rgba(127, 224, 164, 0.5);
 	}
 
 	.after {

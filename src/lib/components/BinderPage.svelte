@@ -48,6 +48,10 @@
 		e.stopPropagation();
 		store.setSpan(side.id, item.id, item.rowSpan === 1 ? 2 : 1, item.colSpan);
 	}
+	function toggleFlip(e: MouseEvent, item: PlacedItem) {
+		e.stopPropagation();
+		store.toggleFlip(side.id, item.id);
+	}
 	function remove(e: MouseEvent, item: PlacedItem) {
 		e.stopPropagation();
 		store.removeItem(side.id, item.id);
@@ -97,13 +101,24 @@
 					<Card card={item.card} showHolo={store.holoOn} />
 				</button>
 			{:else if item.type === 'image' && item.imageUrl}
-				<img class="img" src={item.imageUrl} alt="" draggable="false" />
+				<img
+					class="img"
+					class:flip={item.flip}
+					src={item.imageUrl}
+					alt=""
+					draggable="false"
+				/>
 			{/if}
 
 			<div class="tools">
 				{#if item.type === 'image'}
 					<button title="Span 2 pockets wide" onclick={(e) => toggleWide(e, item)}>↔</button>
 					<button title="Span 2 pockets tall" onclick={(e) => toggleTall(e, item)}>↕</button>
+					<button
+						class:on={item.flip}
+						title="Mirror horizontally"
+						onclick={(e) => toggleFlip(e, item)}>🪞</button
+					>
 				{/if}
 				<button class="del" title="Remove" onclick={(e) => remove(e, item)}>✕</button>
 			</div>
@@ -166,6 +181,9 @@
 		object-fit: cover;
 		border-radius: 6px;
 	}
+	.img.flip {
+		transform: scaleX(-1);
+	}
 	.tools {
 		position: absolute;
 		top: 0.7rem;
@@ -192,6 +210,10 @@
 	}
 	.tools button:hover {
 		background: rgba(60, 40, 110, 0.95);
+	}
+	.tools button.on {
+		background: rgba(var(--accent-rgb), 0.85);
+		color: var(--on-accent);
 	}
 	.tools .del:hover {
 		background: rgba(180, 40, 60, 0.95);

@@ -41,10 +41,17 @@
 		{ id: 'shinyShadow', label: 'Shiny Shadow', color: '#ff8ae0' },
 		{ id: 'mega', label: 'Mega', color: '#ff6b6b' },
 		{ id: 'gmax', label: 'Gigantamax', color: '#ff7ad9' },
+		{ id: 'primal', label: 'Primal', color: '#ff9f43' },
+		{ id: 'terastal', label: 'Terastal', color: '#8fe3ff' },
+		{ id: 'origin', label: 'Origin', color: '#b98cff' },
+		{ id: 'therian', label: 'Therian', color: '#87c5a4' },
+		{ id: 'crowned', label: 'Crowned', color: '#ffcf5c' },
 		{ id: 'alola', label: 'Alolan', color: '#4fd1c5' },
 		{ id: 'galar', label: 'Galarian', color: '#8ab4f8' },
 		{ id: 'hisui', label: 'Hisuian', color: '#c39b6b' },
 		{ id: 'paldea', label: 'Paldean', color: '#a3d977' },
+		{ id: 'totem', label: 'Totem', color: '#e0a458' },
+		{ id: 'variant', label: 'Other forms', color: '#9aa3ad' },
 		{ id: 'legendary', label: 'Legendary', color: '#ffd166' },
 		{ id: 'mythical', label: 'Mythical', color: '#ff9ec7' }
 	];
@@ -107,12 +114,13 @@
 				<button class="tab" class:on={mode === ''} onclick={() => (mode = '')}>Generations</button>
 				{#each COLLECTIONS as c (c.id)}
 					{@const n = dex.countOf(c.id)}
-					{#if n > 0 || mode === c.id}
+					{@const t = dex.totalOf(c.id)}
+					{#if t > 0}
 						<button
 							class="tab col"
 							class:on={mode === c.id}
 							style:--c={c.color}
-							onclick={() => (mode = c.id)}>{c.label} <i>{n}</i></button
+							onclick={() => (mode = c.id)}>{c.label} <i>{n} / {t}</i></button
 						>
 					{/if}
 				{/each}
@@ -133,7 +141,7 @@
 				</div>
 				<div class="sub">{inGen} of {ids.length} caught in {range.name}</div>
 			{:else}
-				<div class="sub">{ids.length} in this collection</div>
+				<div class="sub">{ids.length} of {dex.totalOf(mode)} in this collection</div>
 			{/if}
 
 			<div class="grid">

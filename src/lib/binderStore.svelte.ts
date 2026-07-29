@@ -202,6 +202,13 @@ class BinderStore {
 		return false;
 	}
 
+	// mirror an uploaded image horizontally
+	toggleFlip(sideId: string, itemId: string) {
+		const side = this.binder.sides.find((s) => s.id === sideId);
+		const it = side?.items.find((x) => x.id === itemId);
+		if (it) it.flip = !it.flip;
+	}
+
 	removeItem(sideId: string, itemId: string) {
 		const side = this.binder.sides.find((s) => s.id === sideId);
 		if (!side) return;
