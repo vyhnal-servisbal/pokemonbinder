@@ -148,15 +148,17 @@
 								onerror={(e) => fallback(e, c)}
 								draggable="false"
 							/>
-							<b class="nm">{pretty(c.name)}</b>
+							<span class="info">
+								<b class="nm">{pretty(c.name)}</b>
 
-							<span class="tags">
+								<span class="tags">
 								{#if dex.wasNew(i)}<span class="tag" style:--t="#7fe0a4">NEW</span>{/if}
 								{#if fin.label}<span class="tag" style:--t={fin.color}>{fin.label}</span>{/if}
 								{#if fk}<span class="tag" style:--t={fk.color}>{fk.label}</span>{/if}
 								{#if isLegendary(c.id)}<span class="tag" style:--t="#ffd166">LEGENDARY</span>{/if}
 								{#if isMythical(c.id)}<span class="tag" style:--t="#ff9ec7">MYTHICAL</span>{/if}
-								{#if c.size !== 'M'}<span class="tag" style:--t="#79e2d5">{c.size}</span>{/if}
+									{#if c.size !== 'M'}<span class="tag" style:--t="#79e2d5">{c.size}</span>{/if}
+								</span>
 							</span>
 
 							<small>{c.height} m · {c.weight} kg</small>
@@ -468,48 +470,68 @@
 		font-weight: 900;
 		opacity: 0.3;
 	}
+	/* three clear bands: sprite, then name + badges, then the measurements */
 	.face {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 0.3rem;
-		padding: 0.6rem;
+		justify-content: space-between;
+		gap: 0.5rem;
+		width: 100%;
+		height: 100%;
+		padding: 0.7rem 0.6rem 0.6rem;
 		text-align: center;
 		z-index: 2;
 	}
 	.face img {
-		width: clamp(74px, 9vw, 104px);
-		height: clamp(74px, 9vw, 104px);
+		width: clamp(84px, 10vw, 122px);
+		height: clamp(84px, 10vw, 122px);
 		object-fit: contain;
 		image-rendering: pixelated;
+	}
+	.info {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.35rem;
+		width: 100%;
 	}
 	.card.shadow .face img,
 	.card.shinyShadow .face img {
 		filter: brightness(0.74) saturate(0.6) drop-shadow(0 0 9px rgba(170, 110, 220, 0.95));
 	}
 	.nm {
-		font-size: 0.88rem;
-		line-height: 1.15;
+		font-size: clamp(0.95rem, 1.7vh, 1.15rem);
+		font-weight: 800;
+		line-height: 1.2;
+		text-wrap: balance;
 	}
+	/* measurements sit in their own band under a hairline */
 	.face small {
-		font-size: 0.64rem;
-		opacity: 0.55;
+		width: 100%;
+		padding-top: 0.45rem;
+		border-top: 1px solid rgba(255, 255, 255, 0.12);
+		font-size: clamp(0.72rem, 1.3vh, 0.86rem);
+		font-variant-numeric: tabular-nums;
+		opacity: 0.8;
 	}
 	.tags {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 0.2rem;
+		gap: 0.25rem;
 		justify-content: center;
 	}
 	/* every badge uses its own colour, so classes never fight the finish glow */
 	.tag {
-		padding: 0.1rem 0.4rem;
-		border-radius: 5px;
-		font-size: 0.55rem;
+		padding: 0.16rem 0.5rem;
+		border-radius: 6px;
+		font-size: clamp(0.62rem, 1.15vh, 0.72rem);
 		font-weight: 800;
-		letter-spacing: 0.04em;
+		letter-spacing: 0.03em;
+		line-height: 1.25;
 		color: var(--t);
-		background: color-mix(in srgb, var(--t) 22%, transparent);
+		background: color-mix(in srgb, var(--t) 20%, transparent);
+		border: 1px solid color-mix(in srgb, var(--t) 45%, transparent);
 	}
 
 	.rays {
