@@ -43,15 +43,15 @@
 		}
 	}
 
-	// space does the next sensible thing, so a whole session needs no clicking
+	// space does the next sensible thing, so a whole session needs no clicking:
+	// open a pack, reveal the lot, then straight on to the next pack
 	function advance() {
 		if (!dex.pack.length) {
 			dex.openPack();
 			return;
 		}
 		if (!dex.allFlipped) {
-			const next = dex.pack.findIndex((_, i) => !dex.opened.includes(i));
-			if (next >= 0) dex.flip(next);
+			dex.flipAll();
 			return;
 		}
 		dex.openPack();
@@ -107,7 +107,9 @@
 	<label class="spacetoggle" class:on={spaceMode}>
 		<input type="checkbox" bind:checked={spaceMode} />
 		<span class="knob"></span>
-		<span>Spacebar mode {spaceMode ? 'on, press space to keep going' : 'off'}</span>
+		<span
+			>Spacebar mode {spaceMode ? 'on · space opens a pack, then reveals all of it' : 'off'}</span
+		>
 	</label>
 
 	{#if !dex.pack.length}
