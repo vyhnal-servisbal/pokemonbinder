@@ -10,6 +10,8 @@
 		pretty,
 		finishOf,
 		formKind,
+		rarityGlow,
+		typeColor,
 		isLegendary,
 		isMythical,
 		type Catch
@@ -94,13 +96,6 @@
 		dex.openPack();
 	}
 
-	// the flourish clears itself once it has played out
-	$effect(() => {
-		if (!dex.lastSpecial) return;
-		const t = setTimeout(() => dex.clearSpecial(), 2600);
-		return () => clearTimeout(t);
-	});
-
 	onMount(() => {
 		dex.init();
 		function key(e: KeyboardEvent) {
@@ -170,54 +165,77 @@
 				{@const shown = dex.opened.includes(i)}
 				{@const fin = finishOf(c)}
 				{@const fk = formKind(c.form)}
-				<button
-					class="card {shown ? fin.tier : 'hidden'}"
-					class:shown
-					style:--rc={fin.color}
-					onclick={() => dex.flip(i)}
-					aria-label={shown ? pretty(c.name) : 'Reveal card'}
-				>
-					{#if shown}
-						{#if fin.tier === 'shiny' || fin.tier === 'shinyShadow'}
-							<span class="sheen"></span>
-						{/if}
+				{@const glow = rarityGlow(c)}
+				{@const types = dex.base[c.id]?.types ?? []}
+				{@const wow = dex.specials.includes(i)}
+				<div class="cardwrap" class:wow>
+					{#if wow}
+						<span class="wow-text">SHINY SHADOW</span>
+						<span class="wow-halo"></span>
+						<span class="wow-ring"></span>
+						<span class="wow-ring two"></span>
+					{/if}
+					<button
+							class="card {shown ? fin.tier : 'hidden'}"
+						class:shown
+						style:--rc={fin.color}
+						style:--gl={glow?.color ?? 'transparent'}
+						class:rare={!!glow}
+						onclick={() => dex.flip(i)}
+						aria-label={shown ? pretty(c.name) : 'Reveal card'}
+					>
+						{#if shown}
+							{#if fin.tier === 'shiny' || fin.tier === 'shinyShadow'}
+								<span class="sheen"></span>
+							{/if}
 
-						<!-- corners: size on the left, new entry on the right -->
-						{#if c.size !== 'M'}
-							<span class="corner left">{c.size}</span>
-						{/if}
-						{#if dex.wasNew(i)}
-							<span class="corner right">NEW</span>
-						{/if}
+							<!-- corners: size on the left, new entry on the right -->
+							{#if c.size !== 'M'}
+								<span class="corner left">{c.size}</span>
+							{/if}
+							{#if dex.wasNew(i)}
+								<span class="corner right">NEW</span>
+							{/if}
 
-						<span class="face" in:scale={{ duration: 280, start: 0.55 }}>
-							<span class="artbox">
-								<img
-									src={aniOf(c.name, c.shiny)}
-									alt={c.name}
-									style:transform="scale({scales[i] ?? 1})"
-									onload={(e) => measure(e, i, c)}
-									onerror={(e) => fallback(e, c)}
-									draggable="false"
-								/>
-							</span>
-							<span class="info">
+							<span class="face" in:scale={{ duration: 280, start: 0.55 }}>
+								<span class="artbox">
+									<img
+										src={aniOf(c.name, c.shiny)}
+										alt={c.name}
+										style:transform="scale({scales[i] ?? 1})"
+										onload={(e) => measure(e, i, c)}
+										onerror={(e) => fallback(e, c)}
+										draggable="false"
+									/>
+								</span>
+								<span class="info">
 								<b class="nm">{pretty(c.name)}</b>
 
-								<span class="tags">
-									{#if fin.label}<span class="tag" style:--t={fin.color}>{fin.label}</span>{/if}
-									{#if fk}<span class="tag" style:--t={fk.color}>{fk.label}</span>{/if}
-									{#if isLegendary(c.id)}<span class="tag" style:--t="#ffd166">LEGENDARY</span>{/if}
-									{#if isMythical(c.id)}<span class="tag" style:--t="#ff9ec7">MYTHICAL</span>{/if}
-								</span>
-							</span>
+								{#if types.length}
+									<span class="types">
+										{#each types as t (t)}
+											<span class="type" style:--t={typeColor(t)}>{t}</span>
+										{/each}
+									</span>
+								{/if}
 
-							<small>{c.height} m · {c.weight} kg</small>
-						</span>
-					{:else}
-						<span class="back"><span class="q">?</span></span>
-					{/if}
-				</button>
+								{#if fin.label || fk || isLegendary(c.id) || isMythical(c.id)}
+									<span class="tags">
+										{#if fin.label}<span class="tag" style:--t={fin.color}>{fin.label}</span>{/if}
+										{#if fk}<span class="tag" style:--t={fk.color}>{fk.label}</span>{/if}
+										{#if isLegendary(c.id)}<span class="tag" style:--t="#ffd166">LEGENDARY</span>{/if}
+										{#if isMythical(c.id)}<span class="tag" style:--t="#ff9ec7">MYTHICAL</span>{/if}
+									</span>
+								{/if}
+								</span>
+
+								<small>{c.height} m · {c.weight} kg</small>
+							</span>
+						{:else}
+							<span class="back"><span class="q">?</span></span>
+						{/if}
+	</button>
+				</div>
 			{/each}
 		</div>
 
@@ -230,17 +248,6 @@
 	{/if}
 </main>
 </div>
-
-<!-- shiny shadow flourish: short, centred, never blocks a click -->
-{#if dex.lastSpecial}
-	{@const s = dex.lastSpecial}
-	<div class="flourish" transition:fade={{ duration: 220 }} aria-hidden="true">
-		<span class="halo"></span>
-		<span class="ring"></span>
-		<img src={aniOf(s.name, true)} alt="" />
-		<span class="ftxt">SHINY SHADOW</span>
-	</div>
-{/if}
 
 {#if showDex}
 	<DexModal filter={dexFilter} onClose={() => (showDex = false)} />
@@ -468,7 +475,7 @@
 	.card {
 		position: relative;
 		width: clamp(160px, min(20.5vw, 35dvh), 262px);
-		aspect-ratio: 3 / 4;
+		aspect-ratio: 7 / 10;
 		padding: 0;
 		border-radius: 16px;
 		border: 1px solid rgba(255, 255, 255, 0.12);
@@ -495,6 +502,19 @@
 	.card.shown.common {
 		box-shadow: none;
 		border-color: rgba(255, 255, 255, 0.14);
+	}
+	/* rarity gets an INNER glow, a channel the finish never touches, so a shiny
+	   legendary shows a gold rim outside and a gold bloom inside without clashing */
+	.card.shown.rare::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		border-radius: inherit;
+		pointer-events: none;
+		z-index: 1;
+		box-shadow:
+			inset 0 0 26px color-mix(in srgb, var(--gl) 30%, transparent),
+			inset 0 0 6px color-mix(in srgb, var(--gl) 22%, transparent);
 	}
 	.card.shown.shiny,
 	.card.shown.shinyShadow {
@@ -583,11 +603,30 @@
 		font-variant-numeric: tabular-nums;
 		opacity: 0.8;
 	}
+	.types {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.22rem;
+		justify-content: center;
+	}
+	.type {
+		padding: 0.1rem 0.45rem;
+		border-radius: 999px;
+		font-size: clamp(0.58rem, 1.05vh, 0.68rem);
+		font-weight: 700;
+		text-transform: capitalize;
+		color: var(--t);
+		background: color-mix(in srgb, var(--t) 22%, transparent);
+	}
+	/* hairline between the typing and the rarity badges */
 	.tags {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.25rem;
 		justify-content: center;
+		width: 100%;
+		padding-top: 0.4rem;
+		border-top: 1px solid rgba(255, 255, 255, 0.1);
 	}
 	/* every badge uses its own colour, so classes never fight the finish glow */
 	.tag {
@@ -702,100 +741,129 @@
 		cursor: pointer;
 	}
 
-	/* ---- shiny shadow flourish ---- */
-	.flourish {
-		position: fixed;
-		inset: 0;
-		z-index: 70;
+	/* ---- shiny shadow: happens AROUND the card it came from ---- */
+	.cardwrap {
+		position: relative;
 		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		gap: 0.6rem;
+		/* the effect must escape the card's own overflow:hidden, hence the wrapper */
+	}
+	.cardwrap.wow {
+		z-index: 5;
+	}
+	.cardwrap.wow .card {
+		animation: wowcard 2.4s ease-out;
+	}
+	@keyframes wowcard {
+		0% {
+			transform: scale(1);
+		}
+		12% {
+			transform: scale(1.09) rotate(-1.2deg);
+		}
+		26% {
+			transform: scale(1.03) rotate(0.6deg);
+		}
+		100% {
+			transform: scale(1);
+		}
+	}
+	.wow-text {
+		position: absolute;
+		left: 50%;
+		top: -1.9rem;
+		transform: translateX(-50%);
+		z-index: 3;
+		white-space: nowrap;
+		font-size: clamp(0.8rem, 1.9vh, 1.05rem);
+		font-weight: 900;
+		letter-spacing: 0.14em;
+		background: linear-gradient(90deg, #ff8ae0, #f0c85a, #ff8ae0);
+		background-size: 200% 100%;
+		-webkit-background-clip: text;
+		background-clip: text;
+		color: transparent;
+		filter: drop-shadow(0 0 10px rgba(255, 138, 224, 0.75));
+		animation:
+			wowtext 2.6s ease-out forwards,
+			wowshimmer 1.6s linear infinite;
 		pointer-events: none;
 	}
-	.halo {
+	@keyframes wowtext {
+		0% {
+			opacity: 0;
+			transform: translate(-50%, 10px) scale(0.7);
+		}
+		18% {
+			opacity: 1;
+			transform: translate(-50%, 0) scale(1.06);
+		}
+		30% {
+			transform: translate(-50%, 0) scale(1);
+		}
+		80% {
+			opacity: 1;
+		}
+		100% {
+			opacity: 0;
+		}
+	}
+	@keyframes wowshimmer {
+		to {
+			background-position: 200% 0;
+		}
+	}
+	.wow-halo {
 		position: absolute;
-		width: 60vmin;
-		height: 60vmin;
+		inset: -26%;
 		border-radius: 50%;
 		background: radial-gradient(
 			closest-side,
-			rgba(255, 138, 224, 0.32),
-			rgba(240, 200, 90, 0.16) 55%,
+			rgba(255, 138, 224, 0.4),
+			rgba(240, 200, 90, 0.18) 55%,
 			transparent 72%
 		);
-		animation: halo 2.6s ease-out forwards;
+		animation: wowhalo 2.4s ease-out forwards;
+		pointer-events: none;
 	}
-	@keyframes halo {
+	@keyframes wowhalo {
 		0% {
-			transform: scale(0.2);
 			opacity: 0;
+			transform: scale(0.4);
+		}
+		20% {
+			opacity: 1;
+		}
+		100% {
+			opacity: 0;
+			transform: scale(1.2);
+		}
+	}
+	.wow-ring {
+		position: absolute;
+		inset: 0;
+		border-radius: 18px;
+		border: 2px solid rgba(255, 138, 224, 0.95);
+		box-shadow: 0 0 26px rgba(255, 138, 224, 0.75);
+		animation: wowring 1.5s ease-out forwards;
+		pointer-events: none;
+	}
+	.wow-ring.two {
+		animation-delay: 0.35s;
+		border-color: rgba(240, 200, 90, 0.9);
+		box-shadow: 0 0 22px rgba(240, 200, 90, 0.6);
+	}
+	@keyframes wowring {
+		0% {
+			opacity: 0;
+			transform: scale(0.86);
 		}
 		25% {
 			opacity: 1;
 		}
 		100% {
-			transform: scale(1.25);
 			opacity: 0;
+			transform: scale(1.35);
 		}
-	}
-	.ring {
-		position: absolute;
-		width: 26vmin;
-		height: 26vmin;
-		border-radius: 50%;
-		border: 2px solid rgba(255, 138, 224, 0.9);
-		box-shadow: 0 0 26px rgba(255, 138, 224, 0.8);
-		animation: ringout 1.6s ease-out forwards;
-	}
-	@keyframes ringout {
-		0% {
-			transform: scale(0.35);
-			opacity: 0;
-		}
-		30% {
-			opacity: 1;
-		}
-		100% {
-			transform: scale(2.4);
-			opacity: 0;
-		}
-	}
-	.flourish img {
-		width: clamp(120px, 20vmin, 200px);
-		image-rendering: pixelated;
-		filter: brightness(0.8) saturate(0.7) drop-shadow(0 0 18px rgba(255, 138, 224, 0.95));
-		animation: pop 2.6s ease-out forwards;
-	}
-	@keyframes pop {
-		0% {
-			transform: scale(0.5);
-			opacity: 0;
-		}
-		18% {
-			transform: scale(1.12);
-			opacity: 1;
-		}
-		30% {
-			transform: scale(1);
-		}
-		82% {
-			opacity: 1;
-		}
-		100% {
-			opacity: 0;
-		}
-	}
-	.ftxt {
-		font-size: clamp(1.1rem, 3.4vmin, 2rem);
-		font-weight: 900;
-		letter-spacing: 0.12em;
-		background: linear-gradient(90deg, #ff8ae0, #f0c85a, #ff8ae0);
-		-webkit-background-clip: text;
-		background-clip: text;
-		color: transparent;
-		animation: pop 2.6s ease-out forwards;
 	}
 
 	@media (max-width: 700px) {

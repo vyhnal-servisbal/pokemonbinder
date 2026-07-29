@@ -180,6 +180,36 @@ export function finishOf(c: { shiny: boolean; shadow: boolean }) {
 	return { tier: 'common', label: '', color: '#8b93a3' };
 }
 
+// Species class + form folded into one tier. This drives the INNER glow only,
+// so it never competes with the finish, which owns the border and outer glow.
+const KIND_RANK: Record<string, number> = {
+	gmax: 4,
+	mega: 4,
+	primal: 4,
+	crowned: 3,
+	origin: 3,
+	terastal: 3,
+	therian: 3,
+	totem: 2,
+	alola: 2,
+	galar: 2,
+	hisui: 2,
+	paldea: 2,
+	variant: 1
+};
+
+export function rarityGlow(c: { id: number; form: string }): { color: string; rank: number } | null {
+	let best: { color: string; rank: number } | null = null;
+	const take = (color: string, rank: number) => {
+		if (!best || rank > best.rank) best = { color, rank };
+	};
+	if (MYTHICAL.has(c.id)) take('#ff9ec7', 6);
+	if (LEGENDARY.has(c.id)) take('#ffd166', 5);
+	const k = c.form ? formKind(c.form) : null;
+	if (k) take(k.color, KIND_RANK[k.kind] ?? 1);
+	return best;
+}
+
 // one roll drives both height and weight, the way GO derives its size tags
 function rollSize(): { mult: number; size: Size } {
 	const r = (Math.random() + Math.random() + Math.random()) / 3;
@@ -200,7 +230,7 @@ class DexStore {
 	pack = $state<Catch[]>([]);
 	opened = $state<number[]>([]);
 	opening = $state(false);
-	lastSpecial = $state<Catch | null>(null); // drives the shiny shadow flourish
+	specials = $state<number[]>([]); // pack indexes that pulled a shiny shadow
 
 	// older saves had { shiny, shadow } booleans and '' for the normal size
 	private migrate(raw: Record<string, unknown>): Record<number, Entry> {
@@ -420,7 +450,7 @@ class DexStore {
 		this.opening = true;
 		this.pack = [];
 		this.opened = [];
-		this.lastSpecial = null;
+		this.specials = [];
 
 		const ids = Array.from(
 			{ length: PACK_SIZE },
@@ -456,7 +486,7 @@ class DexStore {
 		if (!c) return;
 		this.record(c);
 		this.persist();
-		if (c.shiny && c.shadow) this.lastSpecial = c;
+		if (c.shiny && c.shadow) this.specials = [...this.specials, i];
 	}
 
 	flipAll() {
@@ -472,8 +502,8 @@ class DexStore {
 		return !!c && this.dex[c.id]?.count === 1;
 	}
 
-	clearSpecial() {
-		this.lastSpecial = null;
+	clearSpecials() {
+		this.specials = [];
 	}
 
 	private record(c: Catch) {
@@ -510,7 +540,7 @@ class DexStore {
 	clearPack() {
 		this.pack = [];
 		this.opened = [];
-		this.lastSpecial = null;
+		this.specials = [];
 	}
 
 	reset() {
