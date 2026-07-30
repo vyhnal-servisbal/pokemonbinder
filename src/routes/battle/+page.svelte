@@ -132,6 +132,14 @@
 			<a class="back" href="/game">‹ Unboxing</a>
 			<h1>Pack battle</h1>
 			{#if inRoom}
+				<input
+					class="myname"
+					bind:value={nameEdit}
+					onblur={saveName}
+					onkeydown={(e) => e.key === 'Enter' && saveName()}
+					placeholder="Your name"
+					title="Your name in this battle and in the chat"
+				/>
 				<span class="tally">{battle.myWins} : {battle.theirWins}</span>
 				<span class="round">Round {battle.room?.round ?? 1}</span>
 				<button class="sharebtn" onclick={share}>{copied ? 'Link copied' : '🔗 Share link'}</button>
@@ -188,13 +196,13 @@
 			</div>
 		{:else}
 			<!-- arena -->
-			{#if !battle.theirName || battle.theirName === 'Waiting…'}
-				<div class="waitbar">
-					Waiting for your opponent. Send them the link with the button up top.
-				</div>
-			{/if}
-
 			<div class="arenaArea">
+				{#if !battle.theirName || battle.theirName === 'Waiting…'}
+					<div class="waitbar">
+						Waiting for your opponent. Your room shows up in their list within a few seconds.
+					</div>
+				{/if}
+
 			<div class="arena">
 				{#each [{ me: true }, { me: false }] as sideDef, si (si)}
 					{@const me = sideDef.me}
