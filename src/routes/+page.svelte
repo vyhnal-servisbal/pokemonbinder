@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { fly } from 'svelte/transition';
 	import Binder from '$lib/components/Binder.svelte';
 	import AddPanel from '$lib/components/AddPanel.svelte';
 	import SessionsModal from '$lib/components/SessionsModal.svelte';
@@ -24,6 +25,31 @@
 	let sessions = $state(false);
 	let achievements = $state(false);
 	let pages = $state(false);
+
+	// one place to add future minigames
+	const GAMES: { icon: string; label: string; href?: string; act?: () => void }[] = [
+		{ icon: '❓', label: "Who's that Pokémon", act: () => fun.openQuiz(buddies.all) },
+		{ icon: '🎁', label: 'Unboxing', href: '/game' },
+		{ icon: '⚔️', label: 'Pack battle', href: '/battle' },
+		{ icon: '🃏', label: 'Pexeso', href: '/pexeso' }
+	];
+
+	let gamesOpen = $state(false);
+	let gamesTimer: ReturnType<typeof setTimeout>;
+
+	// a small delay on leave, so cutting the corner does not close it
+	function gamesEnter() {
+		clearTimeout(gamesTimer);
+		gamesOpen = true;
+	}
+	function gamesLeave() {
+		clearTimeout(gamesTimer);
+		gamesTimer = setTimeout(() => (gamesOpen = false), 160);
+	}
+	function runGame(g: (typeof GAMES)[number]) {
+		gamesOpen = false;
+		g.act?.();
+	}
 
 	// trimming needs two clicks, so empty pages never vanish by accident
 	let trimArmed = $state(false);
@@ -72,6 +98,8 @@
 		return `Page ${store.index + 1} / ${n}`;
 	});
 </script>
+
+<svelte:window onkeydown={(e) => e.key === 'Escape' && (gamesOpen = false)} />
 
 <svelte:head>
 	<title>Pokémon Binder</title>
@@ -134,11 +162,33 @@
 					>✨ Holo</button
 				>
 				<button class="holo" onclick={() => (configuring = true)} title="Poopemons">🐾</button>
-				<button class="holo" onclick={() => fun.openQuiz(buddies.all)} title="Who's that Pokémon?"
-					>❓</button
-				>
 				<button class="holo" onclick={() => (achievements = true)} title="Achievements">🏆</button>
-				<a class="holo game" href="/game" title="Unboxing minigame">🎁 Unboxing</a>
+				
+				<!-- svelte-ignore a11y_no_static_element_interactions -->
+				<div class="games" onmouseenter={gamesEnter} onmouseleave={gamesLeave}>
+					<button
+						class="holo game"
+						class:on={gamesOpen}
+						onclick={() => (gamesOpen = !gamesOpen)}
+						aria-expanded={gamesOpen}
+					>🎮 Games <span class="caret" class:up={gamesOpen}>▾</span></button
+					>
+					{#if gamesOpen}
+						<div class="gmenu" transition:fly={{ y: -6, duration: 140 }}>
+							{#each GAMES as g (g.label)}
+								{#if g.href}
+									<a class="gitem" href={g.href} onclick={() => (gamesOpen = false)}
+										><span>{g.icon}</span> {g.label}</a
+									>
+								{:else}
+									<button class="gitem" onclick={() => runGame(g)}
+										><span>{g.icon}</span> {g.label}</button
+									>
+								{/if}
+							{/each}
+						</div>
+					{/if}
+				</div>
 				{#if cloud.enabled}
 					<button class="holo" onclick={() => (sessions = true)} title="Saved states">💾</button>
 				{/if}
@@ -362,10 +412,11 @@
 		cursor: pointer;
 		font-size: 0.85rem;
 	}
-	/* the game link is an <a>, keep it looking like the buttons next to it
-	   but in pastel aqua so it reads as its own thing */
+	/* games live behind one pastel aqua trigger, so new ones just get a line in GAMES */
+	.games {
+		position: relative;
+	}
 	.holo.game {
-		text-decoration: none;
 		display: inline-flex;
 		align-items: center;
 		gap: 0.35rem;
@@ -375,9 +426,66 @@
 		color: #d1f6ef;
 		font-weight: 600;
 	}
-	.holo.game:hover {
+	.holo.game:hover,
+	.holo.game.on {
 		background: rgba(var(--accent-rgb), 0.28);
 		border-color: var(--accent);
+	}
+	.caret {
+		font-size: 0.7rem;
+		opacity: 0.7;
+		transition: transform 0.15s;
+	}
+	.caret.up {
+		transform: rotate(180deg);
+	}
+	.gmenu {
+		position: absolute;
+		top: calc(100% + 0.4rem);
+		right: 0;
+		z-index: 50;
+		min-width: 210px;
+		display: flex;
+		flex-direction: column;
+		gap: 0.15rem;
+		padding: 0.35rem;
+		border-radius: 12px;
+		border: 1px solid rgba(255, 255, 255, 0.14);
+		background: #1b1c23;
+		box-shadow: 0 22px 48px rgba(0, 0, 0, 0.6);
+	}
+	/* bridges the gap to the trigger, so the pointer never falls through it */
+	.gmenu::before {
+		content: '';
+		position: absolute;
+		left: 0;
+		right: 0;
+		top: -0.4rem;
+		height: 0.4rem;
+	}
+	.gitem {
+		display: flex;
+		align-items: center;
+		gap: 0.55rem;
+		width: 100%;
+		padding: 0.5rem 0.65rem;
+		border: 0;
+		border-radius: 9px;
+		background: none;
+		color: #d8d2f0;
+		font-size: 0.86rem;
+		text-align: left;
+		text-decoration: none;
+		cursor: pointer;
+		white-space: nowrap;
+	}
+	.gitem span {
+		font-size: 1rem;
+		line-height: 1;
+	}
+	.gitem:hover {
+		background: rgba(var(--accent-rgb), 0.2);
+		color: #d1f6ef;
 	}
 	.holo.on {
 		background: rgba(var(--accent-rgb), 0.18);
