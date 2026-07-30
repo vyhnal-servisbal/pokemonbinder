@@ -9,6 +9,13 @@ const LS_ROOM = 'pb_battle_room'; // remembers which side of a room is yours
 
 export type Role = 'host' | 'guest';
 
+export interface Msg {
+	id: number;
+	author: string | null;
+	body: string;
+	created_at: string;
+}
+
 export interface Room {
 	id: string;
 	host_name: string | null;
@@ -37,6 +44,7 @@ class BattleStore {
 	status = $state<'idle' | 'busy' | 'error'>('idle');
 	error = $state('');
 	openRooms = $state<Room[]>([]);
+	messages = $state<Msg[]>([]);
 
 	private channel: RealtimeChannel | null = null;
 	private settledRound = -1; // one tally per round, no matter how often realtime fires
@@ -156,6 +164,7 @@ class BattleStore {
 		this.role = 'host';
 		this.remember(this.room.id, 'host');
 		this.subscribe();
+		this.loadMessages();
 		this.status = 'idle';
 	}
 
@@ -176,6 +185,34 @@ class BattleStore {
 		}
 		this.subscribe();
 		this.status = 'idle';
+	}
+
+	// changing your name inside a room updates the label and every future message
+	async setMyName(n: string) {
+		const name = n.trim();
+		if (!name) return;
+		this.setName(name);
+		if (!this.room || !this.role) return;
+		await this.patch(this.role === 'host' ? { host_name: name } : { guest_name: name });
+	}
+
+	async loadMessages() {
+		if (!this.room) return;
+		const got = await supabase
+			.from('battle_messages')
+			.select('id, author, body, created_at')
+			.eq('battle_id', this.room.id)
+			.order('id', { ascending: true })
+			.limit(200);
+		this.messages = (got.data ?? []) as Msg[];
+	}
+
+	async send(body: string) {
+		const text = body.trim().slice(0, 400);
+		if (!text || !this.room) return;
+		await supabase
+			.from('battle_messages')
+			.insert({ battle_id: this.room.id, author: this.myName, body: text });
 	}
 
 	private fail(msg: string) {
@@ -209,6 +246,19 @@ class BattleStore {
 					{ event: 'UPDATE', schema: 'public', table: 'battles', filter: 'id=eq.' + id },
 					(payload) => {
 						this.room = payload.new as Room;
+					}
+				)
+				.on(
+					'postgres_changes',
+					{
+						event: 'INSERT',
+						schema: 'public',
+						table: 'battle_messages',
+						filter: 'battle_id=eq.' + id
+					},
+					(payload) => {
+						const m = payload.new as Msg;
+						if (!this.messages.some((x) => x.id === m.id)) this.messages = [...this.messages, m];
 					}
 				)
 				.subscribe();
@@ -269,6 +319,7 @@ class BattleStore {
 		}
 		this.room = null;
 		this.role = null;
+		this.messages = [];
 	}
 }
 

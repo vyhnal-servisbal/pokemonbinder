@@ -19,8 +19,37 @@
 	let copied = $state(false);
 	let opening = $state(false);
 	let roomParam = $state<string | null>(null);
+	let chatInput = $state('');
+	let nameEdit = $state('');
+	let feed: HTMLDivElement | undefined = $state();
+
+	// keep the feed pinned to the newest message
+	$effect(() => {
+		battle.messages.length;
+		if (feed) feed.scrollTop = feed.scrollHeight;
+	});
+
+	async function sendChat() {
+		const t = chatInput.trim();
+		if (!t) return;
+		chatInput = '';
+		await battle.send(t);
+	}
+
+	async function saveName() {
+		if (nameEdit.trim() && nameEdit.trim() !== battle.myName) await battle.setMyName(nameEdit);
+	}
+
+	function clock(iso: string) {
+		return new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+	}
 
 	const inRoom = $derived(!!battle.room);
+	// mirror the stored name into the editable box whenever the room says it changed
+	$effect(() => {
+		const n = battle.myName;
+		if (n && n !== 'You' && !nameEdit) nameEdit = n;
+	});
 	const iOpened = $derived(!!battle.mine);
 	const diff = $derived(Math.abs(battle.myScore - battle.theirScore));
 	const iWon = $derived(battle.ready && battle.myScore > battle.theirScore);
@@ -165,6 +194,7 @@
 				</div>
 			{/if}
 
+			<div class="arenaArea">
 			<div class="arena">
 				{#each [{ me: true }, { me: false }] as sideDef, si (si)}
 					{@const me = sideDef.me}
@@ -242,6 +272,34 @@
 					<button class="ghost" onclick={share}>{copied ? 'Copied' : 'Share link'}</button>
 				</div>
 			{/if}
+			</div>
+
+			<!-- chat: no alt tabbing to message each other mid battle -->
+			<section class="chat">
+				<div class="feed" bind:this={feed}>
+					{#if battle.messages.length}
+						{#each battle.messages as m (m.id)}
+							<p class="msg" class:own={m.author === battle.myName}>
+								<b>{m.author || 'Someone'}</b>
+								<span>{m.body}</span>
+								<i>{clock(m.created_at)}</i>
+							</p>
+						{/each}
+					{:else}
+						<p class="empty">No messages yet. Say something.</p>
+					{/if}
+				</div>
+				<form
+					class="composer"
+					onsubmit={(e) => {
+						e.preventDefault();
+						sendChat();
+					}}
+				>
+					<input placeholder="Message…" bind:value={chatInput} maxlength="400" />
+					<button type="submit" disabled={!chatInput.trim()}>Send</button>
+				</form>
+			</section>
 		{/if}
 	</main>
 </div>
@@ -325,14 +383,121 @@
 		max-width: 1500px;
 		width: 100%;
 		margin: 0 auto;
-		padding: 1rem 1.6rem;
+		padding: 0.9rem 1.6rem 1rem;
+		display: grid;
+		/* arena takes what it needs at the top, chat sits under it */
+		grid-template-rows: minmax(0, 1fr) auto;
+		gap: 0.8rem;
+		min-height: 0;
+	}
+	.arenaArea {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		justify-content: center;
-		gap: 1rem;
+		justify-content: flex-start;
+		gap: 0.9rem;
 		min-height: 0;
 		overflow-y: auto;
+	}
+
+	/* ---- chat ---- */
+	.chat {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		height: clamp(150px, 26dvh, 250px);
+		padding: 0.7rem;
+		border-radius: 14px;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		background: rgba(255, 255, 255, 0.03);
+	}
+	.feed {
+		flex: 1;
+		min-height: 0;
+		overflow-y: auto;
+		display: flex;
+		flex-direction: column;
+		gap: 0.28rem;
+		padding-right: 0.2rem;
+	}
+	.msg {
+		margin: 0;
+		display: flex;
+		align-items: baseline;
+		gap: 0.45rem;
+		font-size: 0.84rem;
+		line-height: 1.35;
+	}
+	.msg b {
+		flex: none;
+		font-size: 0.78rem;
+		color: #9aa3ad;
+	}
+	.msg.own b {
+		color: var(--accent);
+	}
+	.msg span {
+		flex: 1;
+		word-break: break-word;
+	}
+	.msg i {
+		flex: none;
+		font-style: normal;
+		font-size: 0.66rem;
+		opacity: 0.35;
+		font-variant-numeric: tabular-nums;
+	}
+	.empty {
+		margin: auto;
+		font-size: 0.8rem;
+		opacity: 0.4;
+	}
+	.composer {
+		display: flex;
+		gap: 0.4rem;
+	}
+	.composer input {
+		flex: 1;
+		min-width: 0;
+		padding: 0.5rem 0.7rem;
+		border-radius: 10px;
+		border: 1px solid rgba(255, 255, 255, 0.14);
+		background: rgba(0, 0, 0, 0.28);
+		color: #fff;
+		font-size: 0.88rem;
+	}
+	.composer input:focus {
+		outline: none;
+		border-color: var(--accent);
+	}
+	.composer button {
+		flex: none;
+		padding: 0.5rem 1rem;
+		border: 0;
+		border-radius: 10px;
+		background: var(--accent);
+		color: var(--on-accent);
+		font-weight: 700;
+		cursor: pointer;
+	}
+	.composer button:disabled {
+		opacity: 0.4;
+		cursor: default;
+	}
+	.myname {
+		width: 130px;
+		padding: 0.3rem 0.6rem;
+		border-radius: 999px;
+		border: 1px solid rgba(255, 255, 255, 0.18);
+		background: rgba(0, 0, 0, 0.28);
+		color: #ece9f7;
+		font-size: 0.8rem;
+		font-weight: 700;
+		text-align: center;
+	}
+	.myname:focus {
+		outline: none;
+		border-color: var(--accent);
 	}
 
 	/* ---- lobby ---- */
