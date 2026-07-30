@@ -176,7 +176,7 @@
 							aria-label={up ? pretty(dex.names[id - 1] ?? '') : 'Hidden card'}
 						>
 							<span class="inner">
-								<span class="back"></span>
+								<span class="cardback"></span>
 								<span class="front">
 									<img src={spriteOf(id)} alt="" loading="lazy" draggable="false" />
 									<i>{pretty(dex.names[id - 1] ?? '')}</i>
@@ -286,9 +286,9 @@
 
 	.wrap {
 		width: 100%;
-		max-width: 1600px;
+		max-width: 1900px;
 		margin: 0 auto;
-		padding: 0.8rem 1.4rem 1rem;
+		padding: 0.5rem 0.9rem 0.7rem;
 		min-height: 0;
 		display: grid;
 		grid-template-rows: minmax(0, 1fr) auto;
@@ -297,19 +297,22 @@
 	}
 
 	/* ---- board ---- */
+	/* a sized container, so the board can be measured against it in cq units */
 	.boardarea {
+		container-type: size;
 		width: 100%;
 		height: 100%;
 		min-height: 0;
-		display: flex;
 		align-self: stretch;
 		justify-self: stretch;
 	}
 	.board {
-		/* the whole trick: shape from the grid, capped by both axes, centred */
-		aspect-ratio: calc(var(--cols) * var(--ar) / var(--rows));
-		max-width: 100%;
-		max-height: 100%;
+		/* aspect-ratio alone only caps the shape, it never makes the board grow.
+		   Asking for the smaller of "all the width" and "the width that makes the
+		   height exactly fill" is what actually fills the screen. */
+		--r: calc(var(--cols) * var(--ar) / var(--rows));
+		aspect-ratio: var(--r);
+		width: min(100cqw, calc(100cqh * var(--r)));
 		margin: auto;
 		display: grid;
 		grid-template-columns: repeat(var(--cols), 1fr);
@@ -342,7 +345,7 @@
 	.card.up .inner {
 		transform: rotateY(180deg);
 	}
-	.back,
+	.cardback,
 	.front {
 		position: absolute;
 		inset: 0;
@@ -350,7 +353,7 @@
 		backface-visibility: hidden;
 		overflow: hidden;
 	}
-	.back {
+	.cardback {
 		border: 1px solid rgba(var(--accent-rgb), 0.35);
 		background:
 			radial-gradient(circle at 50% 50%, rgba(var(--accent-rgb), 0.28) 0 18%, transparent 19%),
@@ -361,7 +364,7 @@
 			),
 			linear-gradient(160deg, #23242e, #14151b);
 	}
-	.card:not(:disabled):hover .back {
+	.card:not(:disabled):hover .cardback {
 		border-color: var(--accent);
 	}
 	.front {

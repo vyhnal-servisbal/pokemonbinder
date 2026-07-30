@@ -263,7 +263,7 @@
 								<small>{c.height} m · {c.weight} kg</small>
 							</span>
 						{:else}
-							<span class="back"><span class="q">?</span></span>
+							<span class="cardback"><span class="q">?</span></span>
 						{/if}
 	</button>
 				</div>
@@ -656,7 +656,8 @@
 			box-shadow: 0 0 46px color-mix(in srgb, var(--rc) 72%, transparent);
 		}
 	}
-	.back {
+	/* card back; deliberately NOT .back, that class is the header link */
+	.cardback {
 		width: 100%;
 		height: 100%;
 		display: flex;
