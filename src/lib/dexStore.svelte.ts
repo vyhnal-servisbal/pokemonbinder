@@ -243,6 +243,12 @@ export const SHOP: Record<string, { cost: number; label: string; desc: string; c
 		label: 'Gigantamax pack',
 		desc: 'Guarantees a Gigantamax you are missing',
 		color: '#ff7ad9'
+	},
+	shinyShadow: {
+		cost: 400,
+		label: 'Shiny Shadow pack',
+		desc: 'Guarantees a shiny shadow you do not have yet',
+		color: '#ff8ae0'
 	}
 };
 
@@ -520,6 +526,8 @@ class DexStore {
 
 	// build a pack without touching the dex; the battle screen uses this too
 	async buildPack(force?: { kind: string; missingOnly: boolean }): Promise<Catch[]> {
+		// without the name list the roll would collapse to id 1, so refuse early
+		if (!this.names.length) return [];
 		const ids = Array.from(
 			{ length: PACK_SIZE },
 			() => 1 + Math.floor(Math.random() * Math.min(DEX_MAX, this.names.length))
@@ -532,7 +540,10 @@ class DexStore {
 			forcedSlot = Math.floor(Math.random() * PACK_SIZE);
 			if (force.kind === 'shiny' || force.kind === 'shinyShadow') {
 				forcedShiny = true;
-				const pool = this.speciesMissingShiny();
+				const pool =
+					force.kind === 'shinyShadow'
+						? this.speciesMissingShinyShadow()
+						: this.speciesMissingShiny();
 				if (force.missingOnly && pool.length) ids[forcedSlot] = pool[Math.floor(Math.random() * pool.length)];
 			} else {
 				const pool = this.speciesWithKind(force.kind, force.missingOnly);
@@ -585,6 +596,14 @@ class DexStore {
 				if (missingOnly && (this.dex[id]?.alts ?? []).includes(a.key)) continue;
 				out.push({ id, alt: a });
 			}
+		}
+		return out;
+	}
+
+	speciesMissingShinyShadow(): number[] {
+		const out: number[] = [];
+		for (let id = 1; id <= Math.min(DEX_MAX, this.names.length); id++) {
+			if (!(this.dex[id]?.forms ?? []).includes('shinyShadow')) out.push(id);
 		}
 		return out;
 	}
