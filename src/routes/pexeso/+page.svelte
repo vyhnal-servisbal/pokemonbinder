@@ -11,6 +11,20 @@
 	let boardW = $state(0);
 	let boardH = $state(0);
 
+	// two clicks, so a stray click never wipes a game in progress
+	let restartArmed = $state(false);
+	let restartTimer: ReturnType<typeof setTimeout>;
+	function restartClick() {
+		clearTimeout(restartTimer);
+		if (restartArmed) {
+			restartArmed = false;
+			pexeso.rematch();
+			return;
+		}
+		restartArmed = true;
+		restartTimer = setTimeout(() => (restartArmed = false), 4000);
+	}
+
 	const g = $derived(pexeso.game);
 	const inGame = $derived(!!g);
 
@@ -76,31 +90,44 @@
 <div class="page">
 	<header class="topbar">
 		<div class="inner">
-			<a class="back" href="/">‹ Binder</a>
-			<h1>Pexeso</h1>
+			<div class="hleft">
+				<a class="back" href="/">‹ Binder</a>
+				<h1>Pexeso</h1>
+			</div>
+
 			{#if inGame}
-				<input
-					class="myname"
-					bind:value={nameEdit}
-					onblur={() => pexeso.setMyName(nameEdit)}
-					onkeydown={(e) => e.key === 'Enter' && pexeso.setMyName(nameEdit)}
-					placeholder="Your name"
-				/>
-				<span class="sc" class:on={pexeso.myTurn}>
-					{pexeso.myName} <b>{pexeso.myScore}</b>
+				<div class="hmid">
+					<input
+						class="myname"
+						bind:value={nameEdit}
+						onblur={() => pexeso.setMyName(nameEdit)}
+						onkeydown={(e) => e.key === 'Enter' && pexeso.setMyName(nameEdit)}
+						placeholder="Your name"
+					/>
+					<span class="sc" class:on={pexeso.myTurn}>{pexeso.myName} <b>{pexeso.myScore}</b></span>
+					<span class="vs">:</span>
+					<span class="sc" class:on={!pexeso.myTurn && pexeso.hasOpponent}
+						>{pexeso.theirName} <b>{pexeso.theirScore}</b></span
+					>
+				</div>
+
+				<span class="note">
+					{#if !pexeso.hasOpponent}
+						Waiting for an opponent
+					{:else if !pexeso.done}
+						{pexeso.myTurn ? 'Your turn' : `${pexeso.theirName}'s turn`}
+					{:else}
+						Game over
+					{/if}
 				</span>
-				<span class="sc" class:on={!pexeso.myTurn && pexeso.hasOpponent}>
-					{pexeso.theirName} <b>{pexeso.theirScore}</b>
-				</span>
-				<button class="ghosty" onclick={() => { pexeso.leave(); pexeso.listOpen(); }}>Leave</button>
+
+				<div class="hright">
+					<button class="ghosty" class:armed={restartArmed} onclick={restartClick}
+						>{restartArmed ? 'Restart?' : '↻ Restart'}</button
+					>
+					<button class="ghosty" onclick={() => { pexeso.leave(); pexeso.listOpen(); }}>Leave</button>
+				</div>
 			{/if}
-			<span class="note">
-				{#if inGame && !pexeso.hasOpponent}
-					Waiting for an opponent, your room is in their list
-				{:else if inGame && !pexeso.done}
-					{pexeso.myTurn ? 'Your turn' : `${pexeso.theirName}'s turn`}
-				{/if}
-			</span>
 		</div>
 	</header>
 
@@ -175,7 +202,7 @@
 							disabled={!pexeso.myTurn || up || pexeso.done}
 							aria-label={up ? pretty(dex.names[id - 1] ?? '') : 'Hidden card'}
 						>
-							<span class="inner">
+							<span class="flip">
 								<span class="cardback"></span>
 								<span class="front">
 									<img src={spriteOf(id)} alt="" loading="lazy" draggable="false" />
@@ -216,14 +243,29 @@
 		backdrop-filter: blur(14px);
 		border-bottom: 1px solid rgba(255, 255, 255, 0.09);
 	}
+	/* groups wrap as blocks, so the bar never breaks into a stack of singles */
 	.inner {
 		display: flex;
 		align-items: center;
-		gap: 0.7rem;
+		gap: 0.5rem 1rem;
 		flex-wrap: wrap;
-		max-width: 1600px;
+		max-width: 1900px;
 		margin: 0 auto;
-		padding: 0.5rem 1.4rem;
+		padding: 0.45rem 1rem;
+	}
+	.hleft,
+	.hmid,
+	.hright {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+	}
+	.hright {
+		margin-left: auto;
+	}
+	.vs {
+		opacity: 0.35;
+		font-weight: 800;
 	}
 	.back {
 		color: #d1f6ef;
@@ -279,9 +321,15 @@
 		cursor: pointer;
 	}
 	.note {
-		margin-left: auto;
-		font-size: 0.76rem;
-		opacity: 0.55;
+		font-size: 0.78rem;
+		opacity: 0.6;
+		white-space: nowrap;
+	}
+	.ghosty.armed {
+		border-color: #f0c85a;
+		background: rgba(240, 200, 90, 0.2);
+		color: #f3d9a8;
+		font-weight: 700;
 	}
 
 	.wrap {
@@ -334,7 +382,8 @@
 	.card:disabled {
 		cursor: default;
 	}
-	.inner {
+	/* the flip wrapper; deliberately NOT .inner, that class is the header row */
+	.flip {
 		position: relative;
 		display: block;
 		width: 100%;
@@ -342,7 +391,7 @@
 		transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
 		transform-style: preserve-3d;
 	}
-	.card.up .inner {
+	.card.up .flip {
 		transform: rotateY(180deg);
 	}
 	.cardback,
