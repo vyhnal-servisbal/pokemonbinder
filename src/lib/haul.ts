@@ -323,22 +323,26 @@ const wildcard = [
 // a wildcard can land on top of any result, so nothing is ever fully predictable
 const WILDCARD_CHANCE = 0.12;
 
-// most interesting first; the first bucket that applies wins
+// Rarest trigger first, not most interesting first. The first bucket that
+// applies wins, so ordering by interest let common tags bury rare ones:
+// shadow is 1/12 a card but 35% of packs, legendary 30%, someNew 65%.
+// The percentages below are the measured chance of a pack containing the tag
+// at all; ordering this way spreads the airtime across every bucket instead.
 const BUCKETS: [key: string, lines: string[]][] = [
-	['shinyShadow', shinyShadow],
-	['mythical', mythical],
-	['legendary', legendary],
-	['gmax', gmax],
-	['mega', mega],
-	['shiny', shiny],
-	['shadow', shadow],
-	['xxl', xxl],
-	['xxs', xxs],
-	['xl', xl],
-	['xs', xs],
-	['bigNew', bigNew],
-	['someNew', someNew],
-	['noNew', noNew]
+	['shinyShadow', shinyShadow], // 0.8%
+	['xxs', xxs], // 6.2%
+	['shiny', shiny], // 9.6%
+	['mythical', mythical], // 10.7%
+	['noNew', noNew], // 11.6%
+	['xxl', xxl], // 11.8%
+	['gmax', gmax], // 14.1%
+	['bigNew', bigNew], // 23.5%
+	['mega', mega], // 26.6%
+	['legendary', legendary], // 30.1%
+	['shadow', shadow], // 35.1%
+	['xs', xs], // 45.9%
+	['xl', xl], // 56.7%
+	['someNew', someNew] // 64.9%
 ];
 
 export const HAUL_LINE_COUNT =
