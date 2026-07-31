@@ -19,6 +19,7 @@
 		SHOP,
 		type Catch
 	} from '$lib/dexStore.svelte';
+	import { haulLine } from '$lib/haul';
 
 	let showDex = $state(false);
 	let dexFilter = $state('');
@@ -71,7 +72,32 @@
 	// a fresh pack starts from unmeasured
 	$effect(() => {
 		dex.pack;
-		untrack(() => (scales = {}));
+		untrack(() => {
+			scales = {};
+			haul = '';
+		});
+	});
+
+	// one line per finished pack, picked from what was actually in it
+	let haul = $state('');
+	$effect(() => {
+		if (!dex.allFlipped) return;
+		untrack(() => {
+			if (haul) return;
+			const p = dex.pack;
+			haul = haulLine({
+				shinyShadow: p.some((c) => c.shiny && c.shadow),
+				shiny: p.some((c) => c.shiny),
+				shadow: p.some((c) => c.shadow),
+				legendary: p.some((c) => isLegendary(c.id)),
+				mythical: p.some((c) => isMythical(c.id)),
+				mega: p.some((c) => formKind(c.form)?.kind === 'mega'),
+				gmax: p.some((c) => formKind(c.form)?.kind === 'gmax'),
+				xxl: p.some((c) => c.size === 'XXL'),
+				xxs: p.some((c) => c.size === 'XXS'),
+				newCount: p.filter((_, i) => dex.wasNew(i)).length
+			});
+		});
 	});
 
 	// space does the next sensible thing, so a whole session needs no clicking:
@@ -188,7 +214,9 @@
 			{/each}
 		</div>
 	{:else}
-		<p class="prompt">{dex.allFlipped ? 'Nice haul.' : 'Tap the cards to reveal them.'}</p>
+		<p class="prompt" class:haul={dex.allFlipped}>
+			{dex.allFlipped ? haul : 'Tap the cards to reveal them.'}
+		</p>
 
 		<div class="cards">
 			{#each dex.pack as c, i (i)}
@@ -633,6 +661,13 @@
 		margin: 0;
 		font-size: 0.9rem;
 		opacity: 0.7;
+		text-align: center;
+	}
+	.prompt.haul {
+		font-size: clamp(0.95rem, 2vh, 1.15rem);
+		font-weight: 700;
+		opacity: 1;
+		color: #d1f6ef;
 	}
 
 	/* ---- cards, sized off the window height so a pack always fits ---- */

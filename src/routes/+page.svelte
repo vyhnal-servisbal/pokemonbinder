@@ -31,7 +31,8 @@
 		{ icon: '❓', label: "Who's that Pokémon", act: () => fun.openQuiz(buddies.all) },
 		{ icon: '🎁', label: 'Unboxing', href: '/game' },
 		{ icon: '⚔️', label: 'Pack battle', href: '/battle' },
-		{ icon: '🃏', label: 'Pexeso', href: '/pexeso' }
+		{ icon: '🃏', label: 'Pexeso', href: '/pexeso' },
+		{ icon: '🎰', label: 'Slots', href: '/slots' }
 	];
 
 	let gamesOpen = $state(false);

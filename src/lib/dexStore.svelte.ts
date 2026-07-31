@@ -313,6 +313,9 @@ class DexStore {
 	opened = $state<number[]>([]);
 	opening = $state(false);
 	specials = $state<number[]>([]); // pack indexes that pulled a shiny shadow
+	// what each flipped card actually added to the dex: a species, a finish,
+	// a size or an alternate form. Anything in here means the card was NEW.
+	newBits = $state<Record<number, string[]>>({});
 	pity = $state<Record<string, number>>({ shiny: 0, mega: 0, gmax: 0, shinyShadow: 0 });
 	dust = $state(0); // earned from duplicates, spent in the shop
 
@@ -654,6 +657,7 @@ class DexStore {
 		this.pack = [];
 		this.opened = [];
 		this.specials = [];
+		this.newBits = {};
 
 		const due = this.duePity();
 		this.pack = await this.buildPack(due ? { kind: due, missingOnly: false } : undefined);
@@ -670,6 +674,7 @@ class DexStore {
 		this.pack = [];
 		this.opened = [];
 		this.specials = [];
+		this.newBits = {};
 		this.pack = await this.buildPack({ kind, missingOnly: true });
 		this.bumpPity();
 		this.persist();
@@ -694,6 +699,7 @@ class DexStore {
 		this.opened = [...this.opened, i];
 		const c = this.pack[i];
 		if (!c) return;
+		this.newBits = { ...this.newBits, [i]: this.whatIsNew(c) };
 		this.record(c);
 		this.persist();
 		if (c.shiny && c.shadow) this.specials = [...this.specials, i];
@@ -703,13 +709,30 @@ class DexStore {
 		for (let i = 0; i < this.pack.length; i++) this.flip(i);
 	}
 
+	// must run before record(), it compares against the dex as it stands now
+	private whatIsNew(c: Catch): string[] {
+		const e = this.dex[c.id];
+		if (!e) return ['species'];
+		const out: string[] = [];
+		const form = formOf(c);
+		if (!(e.forms ?? []).includes(form)) out.push(form);
+		if (!(e.sizes ?? []).includes(c.size)) out.push('size');
+		if (c.form && !(e.alts ?? []).includes(c.form)) out.push('form');
+		return out;
+	}
+
 	get allFlipped() {
 		return this.pack.length > 0 && this.opened.length === this.pack.length;
 	}
 
+	// true for a brand new species AND for a new finish, size or form of one
+	// you already had
 	wasNew(i: number) {
-		const c = this.pack[i];
-		return !!c && this.dex[c.id]?.count === 1;
+		return (this.newBits[i]?.length ?? 0) > 0;
+	}
+
+	newSpecies(i: number) {
+		return this.newBits[i]?.includes('species') ?? false;
 	}
 
 	clearSpecials() {
@@ -753,6 +776,7 @@ class DexStore {
 		this.pack = [];
 		this.opened = [];
 		this.specials = [];
+		this.newBits = {};
 	}
 
 	reset() {
