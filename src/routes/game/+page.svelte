@@ -25,23 +25,12 @@
 	let spaceMode = $state(false);
 
 	// header chips double as shortcuts into the dex
+	// only the headline stats live up here; every other collection is one click
+	// away inside the Pokedex, which already lists them all with counts
 	const CHIPS = [
 		{ id: 'shiny', label: 'shiny', color: '#f0c85a' },
 		{ id: 'shadow', label: 'shadow', color: '#b47ae0' },
 		{ id: 'shinyShadow', label: 'shiny shadow', color: '#ff8ae0' },
-		{ id: 'mega', label: 'mega', color: '#ff6b6b' },
-		{ id: 'gmax', label: 'gigantamax', color: '#ff7ad9' },
-		{ id: 'primal', label: 'primal', color: '#ff9f43' },
-		{ id: 'terastal', label: 'terastal', color: '#8fe3ff' },
-		{ id: 'origin', label: 'origin', color: '#b98cff' },
-		{ id: 'therian', label: 'therian', color: '#87c5a4' },
-		{ id: 'crowned', label: 'crowned', color: '#ffcf5c' },
-		{ id: 'alola', label: 'alolan', color: '#4fd1c5' },
-		{ id: 'galar', label: 'galarian', color: '#8ab4f8' },
-		{ id: 'hisui', label: 'hisuian', color: '#c39b6b' },
-		{ id: 'paldea', label: 'paldean', color: '#a3d977' },
-		{ id: 'totem', label: 'totem', color: '#e0a458' },
-		{ id: 'variant', label: 'other forms', color: '#9aa3ad' },
 		{ id: 'legendary', label: 'legendary', color: '#ffd166' },
 		{ id: 'mythical', label: 'mythical', color: '#ff9ec7' }
 	];
@@ -118,22 +107,10 @@
 <div class="page">
 	<header class="topbar">
 		<div class="inner">
-		<a class="back" href="/">‹ Binder</a>
-		<a class="back battle" href="/battle">⚔ Pack battle</a>
-		<h1>Unboxing</h1>
-
-		<button
-			class="spacebtn"
-			class:on={spaceMode}
-			onclick={() => (spaceMode = !spaceMode)}
-			title={spaceMode
-				? 'Space opens a pack, then reveals all of it'
-				: 'Turn on to play with the spacebar'}
-			aria-pressed={spaceMode}
-		>
-			<span class="knob"></span>
-			Space {spaceMode ? 'on' : 'off'}
-		</button>
+		<div class="hleft">
+			<a class="back" href="/">‹ Binder</a>
+			<h1>Unboxing</h1>
+		</div>
 
 		<div class="chips">
 			<button class="chip main" onclick={() => openDex()}>
@@ -149,7 +126,19 @@
 					</button>
 				{/if}
 			{/each}
+		</div>
+
+		<div class="hright">
 			<button class="chip pokedex" onclick={() => openDex()}>Pokédex</button>
+			<button
+				class="spacebtn"
+				class:on={spaceMode}
+				onclick={() => (spaceMode = !spaceMode)}
+				title="Space opens a pack, then reveals all of it"
+				aria-pressed={spaceMode}
+			><span class="knob"></span> Space</button
+			>
+			<a class="back battle" href="/battle">⚔ Battle</a>
 		</div>
 	</div>
 </header>
@@ -293,14 +282,24 @@
 		backdrop-filter: blur(14px);
 		border-bottom: 1px solid rgba(255, 255, 255, 0.09);
 	}
+	/* groups wrap as blocks, so the bar never breaks into a stack of singles */
 	.inner {
 		display: flex;
 		align-items: center;
-		gap: 1rem;
+		gap: 0.5rem 1rem;
 		flex-wrap: wrap;
-		max-width: 1500px;
+		max-width: 1900px;
 		margin: 0 auto;
-		padding: 0.55rem 1.6rem;
+		padding: 0.45rem 1rem;
+	}
+	.hleft,
+	.hright {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+	}
+	.hright {
+		margin-left: auto;
 	}
 	.back {
 		color: #d1f6ef;

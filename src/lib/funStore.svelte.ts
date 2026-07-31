@@ -50,6 +50,7 @@ export function pretty(name: string) {
 
 class FunStore {
 	unlocked = $state<string[]>([]);
+	ready = $state(false); // nothing may unlock before the save file is read
 	toast = $state<Achievement | null>(null);
 
 	snorlax = $state(false);
@@ -58,6 +59,8 @@ class FunStore {
 
 	winError = $state(false);
 	quiz = $state<Quiz | null>(null);
+	quizRight = $state(0);
+	quizTotal = $state(0);
 
 	init() {
 		try {
@@ -66,6 +69,7 @@ class FunStore {
 		} catch {
 			/* ignore */
 		}
+		this.ready = true;
 	}
 
 	private persist() {
@@ -81,7 +85,9 @@ class FunStore {
 	}
 
 	unlock(id: string) {
-		if (this.has(id)) return;
+		// before init the list is empty, so unlocking now would re-announce
+		// everything the player already has on every single page load
+		if (!this.ready || this.has(id)) return;
 		const a = ACHIEVEMENTS.find((x) => x.id === id);
 		if (!a) return;
 		this.unlocked = [...this.unlocked, id];
@@ -127,6 +133,13 @@ class FunStore {
 
 	openQuiz(pool: string[]) {
 		if (this.quiz || this.snorlax) return;
+		this.quizRight = 0;
+		this.quizTotal = 0;
+		this.nextQuiz(pool);
+	}
+
+	// deals a fresh question into the same popup, so a session keeps running
+	nextQuiz(pool: string[]) {
 		const n = Math.min(QUIZ_POOL, pool.length);
 		if (n < 4) return;
 		const idx = Math.floor(Math.random() * n);
@@ -139,8 +152,11 @@ class FunStore {
 	answerQuiz(name: string) {
 		if (!this.quiz || this.quiz.picked) return;
 		this.quiz = { ...this.quiz, picked: name };
-		if (name === this.quiz.name) this.unlock('quiz');
-		setTimeout(() => (this.quiz = null), 2800);
+		this.quizTotal++;
+		if (name === this.quiz.name) {
+			this.quizRight++;
+			this.unlock('quiz');
+		}
 	}
 
 	closeQuiz() {

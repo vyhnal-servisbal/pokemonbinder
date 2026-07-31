@@ -2,6 +2,7 @@
 	import { onMount, untrack } from 'svelte';
 	import { fade, scale, fly } from 'svelte/transition';
 	import { store } from '$lib/binderStore.svelte';
+	import { buddies } from '$lib/buddyStore.svelte';
 	import { fun, pretty } from '$lib/funStore.svelte';
 
 	interface Drop {
@@ -61,6 +62,7 @@
 		const n = cardCount;
 		const sets = setCount;
 		const full = fullPage;
+		if (!fun.ready) return;
 		untrack(() => {
 			if (n >= 1) fun.unlock('first-card');
 			if (n >= 50) fun.unlock('fifty');
@@ -199,7 +201,10 @@
 	{@const q = fun.quiz}
 	<div class="quiz" transition:fade={{ duration: 180 }}>
 		<div class="quizbox" transition:scale={{ duration: 220, start: 0.9 }}>
-			<h2>Who's that Pokémon?</h2>
+			<div class="qhead">
+				<h2>Who's that Pokémon?</h2>
+				{#if fun.quizTotal}<span class="qscore">{fun.quizRight} / {fun.quizTotal}</span>{/if}
+			</div>
 			<div class="silo" class:revealed={!!q.picked}>
 				<img src="{ART}/{q.dexId}.png" alt="" />
 			</div>
@@ -219,6 +224,10 @@
 					It's <strong>{pretty(q.name)}</strong>!
 					{q.picked === q.name ? '🎉' : '💀'}
 				</p>
+				<div class="qbtns">
+					<button class="qnext" onclick={() => fun.nextQuiz(buddies.all)}>Next</button>
+					<button class="qdone" onclick={() => fun.closeQuiz()}>Done</button>
+				</div>
 			{/if}
 			<button class="qclose" onclick={() => fun.closeQuiz()} aria-label="Close">×</button>
 		</div>
@@ -505,6 +514,43 @@
 	.verdict {
 		margin: 0;
 		font-size: 0.9rem;
+	}
+	.qhead {
+		display: flex;
+		align-items: baseline;
+		gap: 0.7rem;
+	}
+	.qscore {
+		font-size: 0.85rem;
+		font-weight: 800;
+		color: var(--accent);
+		font-variant-numeric: tabular-nums;
+	}
+	.qbtns {
+		display: flex;
+		gap: 0.5rem;
+	}
+	.qnext,
+	.qdone {
+		padding: 0.5rem 1.3rem;
+		border-radius: 10px;
+		font-size: 0.88rem;
+		font-weight: 700;
+		cursor: pointer;
+		border: 1px solid transparent;
+	}
+	.qnext {
+		border: 0;
+		background: var(--accent);
+		color: var(--on-accent);
+	}
+	.qdone {
+		border-color: rgba(255, 255, 255, 0.16);
+		background: rgba(255, 255, 255, 0.06);
+		color: #ece9f7;
+	}
+	.qdone:hover {
+		background: rgba(255, 255, 255, 0.14);
 	}
 	.qclose {
 		position: absolute;
