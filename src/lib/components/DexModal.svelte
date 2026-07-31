@@ -356,7 +356,13 @@
 			</div>
 		{/if}
 
-		<button class="close" onclick={onClose} aria-label="Close">×</button>
+		<!-- in the detail the X means "back to the grid", not "close everything" -->
+		<button
+			class="close"
+			onclick={() => (open !== null ? back() : onClose())}
+			aria-label={open !== null ? 'Back to the Pokedex' : 'Close'}
+			title={open !== null ? 'Back to the Pokédex' : 'Close'}>×</button
+		>
 	</div>
 </div>
 

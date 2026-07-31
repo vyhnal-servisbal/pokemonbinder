@@ -12,7 +12,10 @@ export const PACK_SIZE = 5;
 
 const SHINY_ODDS = 50;
 const SHADOW_ODDS = 12;
-const ALT_FORM_CHANCE = 0.18; // when a species has alternate forms
+// Raised from 0.18: a specific form used to be roughly 1 in 15k packs for a
+// species like Minior, because the odds split three ways (species, then form
+// chance, then which of its forms). See the missing-first pick below too.
+const ALT_FORM_CHANCE = 0.38;
 
 // baked in (71 + 23 ids) so class lookups cost nothing at runtime
 const LEGENDARY = new Set([
@@ -249,6 +252,12 @@ export const SHOP: Record<string, { cost: number; label: string; desc: string; c
 		label: 'Shiny Shadow pack',
 		desc: 'Guarantees a shiny shadow you do not have yet',
 		color: '#ff8ae0'
+	},
+	form: {
+		cost: 90,
+		label: 'Form pack',
+		desc: 'Guarantees any alternate form you are missing',
+		color: '#9aa3ad'
 	}
 };
 
@@ -561,9 +570,13 @@ class DexStore {
 		return ids.map((id, k) => {
 			const { mult, size } = rollSize();
 			const pool = this.alts[id] ?? [];
+			// prefer forms this species still owes you, otherwise a 13 form species
+			// like Minior becomes a coupon collector problem you never finish
+			const owed = pool.filter((a) => !(this.dex[id]?.alts ?? []).includes(a.key));
+			const from = owed.length ? owed : pool;
 			let alt: AltForm | null =
 				pool.length && Math.random() < ALT_FORM_CHANCE
-					? pool[Math.floor(Math.random() * pool.length)]
+					? from[Math.floor(Math.random() * from.length)]
 					: null;
 			let shiny = Math.floor(Math.random() * SHINY_ODDS) === 0;
 			let shadow = Math.floor(Math.random() * SHADOW_ODDS) === 0;
@@ -604,6 +617,16 @@ class DexStore {
 		const out: number[] = [];
 		for (let id = 1; id <= Math.min(DEX_MAX, this.names.length); id++) {
 			if (!(this.dex[id]?.forms ?? []).includes('shinyShadow')) out.push(id);
+		}
+		return out;
+	}
+
+	speciesWithAnyMissingForm(): { id: number; alt: AltForm }[] {
+		const out: { id: number; alt: AltForm }[] = [];
+		for (const [k, list] of Object.entries(this.alts)) {
+			const id = Number(k);
+			const got = this.dex[id]?.alts ?? [];
+			for (const a of list) if (!got.includes(a.key)) out.push({ id, alt: a });
 		}
 		return out;
 	}

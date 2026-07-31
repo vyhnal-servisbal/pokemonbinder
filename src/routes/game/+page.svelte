@@ -91,9 +91,16 @@
 	onMount(() => {
 		dex.init();
 		function key(e: KeyboardEvent) {
-			if (e.code !== 'Space' || !spaceMode || showDex) return;
 			const t = e.target as HTMLElement | null;
 			if (t && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) return;
+			if (showDex) return;
+			// S toggles the mode from anywhere, so the switch never needs a trip
+			// to the corner of the screen
+			if (e.code === 'KeyS') {
+				spaceMode = !spaceMode;
+				return;
+			}
+			if (e.code !== 'Space' || !spaceMode) return;
 			e.preventDefault(); // stop the page scrolling
 			advance();
 		}
@@ -128,16 +135,19 @@
 			{/each}
 		</div>
 
+		<button class="dexbtn" onclick={() => openDex()}>📕 Pokédex</button>
+
 		<div class="hright">
-			<button class="chip pokedex" onclick={() => openDex()}>Pokédex</button>
 			<button
 				class="spacebtn"
 				class:on={spaceMode}
 				onclick={() => (spaceMode = !spaceMode)}
-				title="Space opens a pack, then reveals all of it"
+				title="Press S anywhere to toggle. Space then opens a pack and reveals it."
 				aria-pressed={spaceMode}
-			><span class="knob"></span> Space</button
 			>
+				<span class="knob"></span>
+				<span class="sptxt">Space mode <kbd>S</kbd></span>
+			</button>
 			<a class="back battle" href="/battle">⚔ Battle</a>
 		</div>
 	</div>
@@ -357,9 +367,25 @@
 	.chip.main {
 		--c: #79e2d5;
 	}
-	.chip.pokedex {
-		--c: #ffffff;
-		font-weight: 700;
+	/* the way into the dex, deliberately the loudest thing in the bar */
+	.dexbtn {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		padding: 0.45rem 1.1rem;
+		border: 0;
+		border-radius: 999px;
+		background: var(--accent);
+		color: var(--on-accent);
+		font-size: 0.86rem;
+		font-weight: 800;
+		cursor: pointer;
+		white-space: nowrap;
+		box-shadow: 0 6px 18px rgba(var(--accent-rgb), 0.3);
+	}
+	.dexbtn:hover {
+		background: #8fe9dd;
+		box-shadow: 0 8px 22px rgba(var(--accent-rgb), 0.45);
 	}
 
 	/* the page owns the viewport: header takes what it needs, main gets the rest.
@@ -388,15 +414,33 @@
 	.spacebtn {
 		display: inline-flex;
 		align-items: center;
-		gap: 0.45rem;
-		padding: 0.3rem 0.75rem 0.3rem 0.35rem;
+		gap: 0.5rem;
+		padding: 0.38rem 0.85rem 0.38rem 0.4rem;
 		border-radius: 999px;
-		border: 1px solid rgba(255, 255, 255, 0.14);
-		background: rgba(255, 255, 255, 0.04);
+		border: 1px solid rgba(255, 255, 255, 0.18);
+		background: rgba(255, 255, 255, 0.05);
 		color: #d8d2f0;
-		font-size: 0.76rem;
+		font-size: 0.82rem;
 		cursor: pointer;
 		white-space: nowrap;
+	}
+	.sptxt {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+	}
+	kbd {
+		padding: 0.05rem 0.35rem;
+		border-radius: 5px;
+		border: 1px solid rgba(255, 255, 255, 0.25);
+		background: rgba(0, 0, 0, 0.35);
+		font-family: inherit;
+		font-size: 0.68rem;
+		font-weight: 800;
+		line-height: 1.4;
+	}
+	.spacebtn.on kbd {
+		border-color: rgba(var(--accent-rgb), 0.6);
 	}
 	.spacebtn.on {
 		border-color: var(--accent);
@@ -405,8 +449,8 @@
 	}
 	.knob {
 		position: relative;
-		width: 30px;
-		height: 17px;
+		width: 34px;
+		height: 19px;
 		border-radius: 999px;
 		background: rgba(255, 255, 255, 0.18);
 		transition: background 0.18s;
@@ -417,8 +461,8 @@
 		position: absolute;
 		top: 2px;
 		left: 2px;
-		width: 13px;
-		height: 13px;
+		width: 15px;
+		height: 15px;
 		border-radius: 50%;
 		background: #fff;
 		transition: transform 0.18s;
@@ -427,7 +471,7 @@
 		background: var(--accent);
 	}
 	.spacebtn.on .knob::after {
-		transform: translateX(13px);
+		transform: translateX(15px);
 	}
 
 	/* ---- the pack ---- */
