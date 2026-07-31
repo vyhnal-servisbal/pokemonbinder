@@ -44,10 +44,6 @@ const legendary = [
 	'Koraidon’t believe my eyes.',
 	'Articuno-t be more pleased.',
 	'Regi-stered in the dex.',
-	'Latios and Latias, better late than never.',
-	'Rayquaza. Lives in the ozone layer, now lives in a sleeve.',
-	'Yveltal, the destruction Pokémon. Lovely houseguest.',
-	'Xerneas sleeps as a tree for a thousand years. Relatable.',
 	'Zacian is a dog holding a sword. That is the entire pitch.',
 	'A legendary. The music changed and you noticed.',
 	'Legendary pulled. An entire region is now unguarded.',
@@ -173,17 +169,17 @@ const xxl = [
 ];
 
 const xl = [
-	'XL. Comfortably above average.',
+	'Comfortably above average.',
 	'A big lad, but a reasonable big lad.',
-	'XL. Had seconds, regrets nothing.',
+	'Had seconds, regrets nothing.',
 	'Chunky. In a professional way.',
 	'That one is built like a Snorlax cousin.',
-	'XL. Barely fits, definitely counts.',
+	'Barely fits, definitely counts.',
 	'A hearty specimen.',
-	'XL. Went back for pudding.',
+	'Went back for pudding.',
 	'Well fed, well rounded, well pulled.',
 	'That one takes up more than its share of the sleeve.',
-	'XL. Sturdy. Dependable. Enormous.',
+	'Sturdy. Dependable. Enormous.',
 	'Slightly too much Pokémon for one card.'
 ];
 
