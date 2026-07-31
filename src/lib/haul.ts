@@ -259,7 +259,6 @@ const someNew = [
 	'One more off the list. Hera-cross it out.',
 	'That counts. Barely, but it counts.',
 	'A quiet little win. Whimsi-cotton on.',
-	'It’s super effective. Mildly.',
 	'The dex approves, quietly. Furret-ing along.',
 	'Job done. Turt-wig out about it.',
 	'Fresh meat for the binder.',
@@ -308,7 +307,6 @@ const noNew = [
 const wildcard = [
 	'Farfetch’d? More like Fart-fetch’d.',
 	'Gastly. Because somebody was.',
-	'Silent, but super effective.',
 	'A wild stench appeared.',
 	'Not a shiny. Just brown.',
 	'Poop-lup, I choose you.',
