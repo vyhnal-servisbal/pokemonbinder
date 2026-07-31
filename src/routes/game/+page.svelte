@@ -95,6 +95,8 @@
 				gmax: p.some((c) => formKind(c.form)?.kind === 'gmax'),
 				xxl: p.some((c) => c.size === 'XXL'),
 				xxs: p.some((c) => c.size === 'XXS'),
+				xl: p.some((c) => c.size === 'XL'),
+				xs: p.some((c) => c.size === 'XS'),
 				newCount: p.filter((_, i) => dex.wasNew(i)).length
 			});
 		});
